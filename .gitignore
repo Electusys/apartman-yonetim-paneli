@@ -1,0 +1,47 @@
+## Build
+bin/
+obj/
+[Bb]uild/
+[Ll]og/
+[Ll]ogs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## Visual Studio / VS Code
+.vs/
+.vscode/*
+!.vscode/tasks.json
+!.vscode/launch.json
+*.rsuser
+*.DotSettings.user
+
+## NuGet
+*.nupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Publish / temp
+publish/
+*.publish.xml
+*.azurePubxml
+*.pubxml
+*.pubxml.user
+AppPackages/
+BundleArtifacts/
+
+## OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+## Secrets / local
+*.pfx
+*.snk
+appsettings.*.local.json
+.env
+.env.*

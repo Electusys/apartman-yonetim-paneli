@@ -1,0 +1,15 @@
+---
+description: Apartman Yönetim Paneli Modern ve Esnek UI Kuralları
+globs: "**/*"
+alwaysApply: true
+---
+
+# Modern Tasarım Sistemi Kuralları
+- **Tema ve Renkler:** Koyu tema (Dark Mode) kullan. 
+  - Arka plan: Koyu gri/antrasit (`#2a2e3d` veya `#1f222b`)
+  - Vurgu/Accent Rengi: Canlı Fıstık Yeşili/Sarı (`#c5e11d` veya `#d4ec1d`)
+- **Düzen Yapısı (Flex/Layout):** Arayüz tamamen esnek (flex/dock) olmalı, ekran büyütüldüğünde bileşenler orantılı yayılmalıdır.
+  - Sol taraf: Dikey navigasyon menüsü (Simgeler ve metin alt alta veya yan yana dengeli).
+  - Üst sol: Projenin modern ve canlı renkli logosu.
+  - Sağ taraf: Geniş grafik, analiz kartları ve görev listesi alanı.
+- **Görsel Stil:** Kenarlıklar düz (Flat UI), gölgelendirmeler soft, butonlar oval veya köşeli ama modern olmalı. Klasik 3D Windows bileşenleri kesinlikle kullanılmamalıdır.
