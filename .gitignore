@@ -27,6 +27,9 @@ artifacts/
 
 ## Publish / temp
 publish/
+dist/
+*.zip
+release-assets/
 *.publish.xml
 *.azurePubxml
 *.pubxml

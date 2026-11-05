@@ -1,3 +1,4 @@
+using System.Configuration;
 using System.Data;
 using MySqlConnector;
 
@@ -5,17 +6,24 @@ namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
     /// MySQL bağlantı bilgileri, rol adları ve ilk kurulum işlemleri.
-    /// Tüm formlar kullanıcı sorgularında buradaki sabitleri kullanır.
+    /// Bağlantı ve Admin bilgileri App.config üzerinden okunur.
     /// </summary>
     internal static class Veritabani
     {
-        // Yerel MySQL sunucusuna bağlantı. Şifre ve kullanıcı adı buradan okunur.
-        public const string ConnectionString =
-            "Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=8484eryGt;";
+        // Yerel demo varsayılanı. Gerçek şifreyi App.config içinden değiştirin.
+        private const string VarsayilanBaglanti =
+            "Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=;";
+
+        public static string ConnectionString =>
+            ConfigurationManager.ConnectionStrings["ApartmanDb"]?.ConnectionString
+            ?? VarsayilanBaglanti;
 
         // Sistem yöneticisi hesabı: kayıt formundan alınamaz, yalnızca bu sınıf oluşturur/günceller.
-        public const string AdminKullaniciAdi = "Admin";
-        public const string AdminSifre = "8484erygt";
+        public static string AdminKullaniciAdi =>
+            ConfigurationManager.AppSettings["AdminKullaniciAdi"] ?? "Admin";
+
+        public static string AdminSifre =>
+            ConfigurationManager.AppSettings["AdminSifre"] ?? "Admin123";
 
         // Roller hiyerarşisi:
         // Admin → apartman yöneticisi oluşturur
