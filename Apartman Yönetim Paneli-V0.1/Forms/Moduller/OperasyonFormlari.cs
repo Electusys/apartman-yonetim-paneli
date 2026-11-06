@@ -147,8 +147,8 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 || string.Equals(rolAdi, Veritabani.RolTeknisyen, StringComparison.OrdinalIgnoreCase);
 
             string aciklama = _sakin
-                ? "Arıza alanını, kategorisini ve açıklamasını girerek bildirim oluşturun."
-                : "Bildirimi seçip durumunu ve çözüm notunu güncelleyin.";
+                ? "Tüm arızaları görüntüleyin; kendi daireniz için yeni bildirim oluşturun."
+                : "Bildirimleri görüntüleyin, durumunu ve çözüm notunu güncelleyin.";
             Panel govde = FormIskeleti.Olustur(this, adSoyad, _sakin ? "Arıza ve Bakım Bildirimleri" : "Arıza ve Bakım Yönetimi", aciklama);
 
             TableLayoutPanel tablo = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2 };
@@ -231,21 +231,15 @@ namespace Apartman_Yönetim_Paneli_V0._1
         {
             try
             {
+                // Sakin, yönetici ve teknisyen tüm arızaları görür; sakin yalnızca bildirim ekler.
                 string sql = @"SELECT a.ArizaID, CONCAT(IFNULL(d.Blok, '-'), ' / ', d.DaireNo) AS Daire,
                                       CONCAT(k.Ad, ' ', k.Soyad) AS Bildiren, a.Alan, a.Kategori, a.Aciklama,
                                       a.Oncelik, a.Durum, a.CozumNotu, a.OlusturmaTarihi
                                FROM ArizaBildirimleri a
                                INNER JOIN Daireler d ON d.DaireID = a.DaireID
-                               INNER JOIN Kullanicilar k ON k.KullaniciID = a.BildirenKullaniciID";
-                if (_sakin)
-                {
-                    sql += " WHERE a.BildirenKullaniciID = @id";
-                    _dgv.DataSource = Veritabani.TabloGetir(sql + " ORDER BY a.ArizaID DESC", ("@id", _kullaniciId));
-                }
-                else
-                {
-                    _dgv.DataSource = Veritabani.TabloGetir(sql + " ORDER BY a.ArizaID DESC");
-                }
+                               INNER JOIN Kullanicilar k ON k.KullaniciID = a.BildirenKullaniciID
+                               ORDER BY a.ArizaID DESC";
+                _dgv.DataSource = Veritabani.TabloGetir(sql);
 
                 UiTema.KolonBasliklari(_dgv,
                     ("ArizaID", "ID"),

@@ -20,10 +20,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         // Sistem yöneticisi hesabı: kayıt formundan alınamaz, yalnızca bu sınıf oluşturur/günceller.
         public static string AdminKullaniciAdi =>
-            ConfigurationManager.AppSettings["AdminKullaniciAdi"] ?? "Admin";
+            ConfigurationManager.AppSettings["AdminKullaniciAdi"] ?? "admin";
 
         public static string AdminSifre =>
-            ConfigurationManager.AppSettings["AdminSifre"] ?? "Admin123";
+            ConfigurationManager.AppSettings["AdminSifre"] ?? "1234";
 
         // Roller hiyerarşisi:
         // Admin → apartman yöneticisi oluşturur

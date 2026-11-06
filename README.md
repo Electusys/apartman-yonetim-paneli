@@ -46,8 +46,8 @@ Arayüz: koyu antrasit arka plan, fıstık yeşili vurgu (`#c5e11d`), sol dikey 
 
 | Alan | Değer |
 | --- | --- |
-| Kullanıcı adı | `Admin` |
-| Şifre | `Admin123` |
+| Kullanıcı adı | `admin` |
+| Şifre | `1234` |
 
 Bu değerler `App.config` / yayınlanan `.dll.config` dosyasından değiştirilebilir. Uygulama açılırken Admin hesabı yoksa otomatik oluşturulur.
 
