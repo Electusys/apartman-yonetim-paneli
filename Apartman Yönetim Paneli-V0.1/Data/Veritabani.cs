@@ -1,5 +1,6 @@
 using System.Configuration;
 using System.Data;
+using System.Text;
 using MySqlConnector;
 
 namespace Apartman_Yönetim_Paneli_V0._1
@@ -14,8 +15,17 @@ namespace Apartman_Yönetim_Paneli_V0._1
         private const string VarsayilanBaglanti =
             "Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=;";
 
+        private const string BaglantiAdi = "ApartmanDb";
+
+        /// <summary>
+        /// true ise ApartmanDb App.config / .dll.config içinde bulundu; false ise kod içi varsayılan kullanılıyor.
+        /// </summary>
+        public static bool BaglantiConfigdenOkundu =>
+            !string.IsNullOrWhiteSpace(
+                ConfigurationManager.ConnectionStrings[BaglantiAdi]?.ConnectionString);
+
         public static string ConnectionString =>
-            ConfigurationManager.ConnectionStrings["ApartmanDb"]?.ConnectionString
+            ConfigurationManager.ConnectionStrings[BaglantiAdi]?.ConnectionString
             ?? VarsayilanBaglanti;
 
         // Sistem yöneticisi hesabı: kayıt formundan alınamaz, yalnızca bu sınıf oluşturur/günceller.
@@ -48,6 +58,57 @@ namespace Apartman_Yönetim_Paneli_V0._1
             MySqlConnection baglanti = new MySqlConnection(ConnectionString);
             baglanti.Open();
             return baglanti;
+        }
+
+        /// <summary>
+        /// Kullanıcıya gösterilecek bağlantı özeti (şifre hariç) + ham MySQL hata metni.
+        /// App.config okunamadığında veya kimlik bilgisi yanlış olduğunda teşhisi kolaylaştırır.
+        /// </summary>
+        public static string BaglantiHatasiMetni(Exception ex)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(ex.Message);
+
+            if (ex is MySqlException my)
+            {
+                sb.AppendLine($"MySQL hata no: {my.Number}");
+                if (!string.IsNullOrWhiteSpace(my.SqlState))
+                {
+                    sb.AppendLine($"SQL state: {my.SqlState}");
+                }
+            }
+
+            if (ex.InnerException != null && !string.IsNullOrWhiteSpace(ex.InnerException.Message))
+            {
+                sb.AppendLine("İç hata: " + ex.InnerException.Message);
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Hedef: " + BaglantiOzeti(ConnectionString));
+            sb.AppendLine(
+                BaglantiConfigdenOkundu
+                    ? "Kaynak: App.config / *.dll.config içindeki ApartmanDb."
+                    : "Kaynak: App.config okunamadı; kod içi varsayılan kullanıldı (Pwd boş olabilir).");
+            sb.AppendLine(
+                "Kontrol: MySQL çalışıyor mu, ApartmanYonetimDB oluşturuldu mu, Pwd= doğru mu?");
+            return sb.ToString().TrimEnd();
+        }
+
+        /// <summary>
+        /// Connection string'den Server/Port/Database/Uid özetler; Pwd asla yazılmaz.
+        /// </summary>
+        public static string BaglantiOzeti(string connectionString)
+        {
+            try
+            {
+                MySqlConnectionStringBuilder b = new MySqlConnectionStringBuilder(connectionString);
+                string sifreDurumu = string.IsNullOrEmpty(b.Password) ? "Pwd=(boş)" : "Pwd=(dolu)";
+                return $"Server={b.Server};Port={b.Port};Database={b.Database};Uid={b.UserID};{sifreDurumu}";
+            }
+            catch
+            {
+                return "(bağlantı dizesi ayrıştırılamadı)";
+            }
         }
 
         public static DataTable TabloGetir(string sql, params (string Ad, object? Deger)[] parametreler)

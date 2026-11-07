@@ -74,7 +74,12 @@ cd apartman-yonetim-paneli
    - `sql/00_kurulum.sql`
    - `sql/ApartmanYonetimDB_senaryo_tablolari.sql`
 2. `Apartman Yönetim Paneli-V0.1/App.config` içinde `Pwd=` değerini kendi MySQL şifrenizle doldurun.
+   Boş `Pwd=` çoğu kurulumda `Access denied` üretir.
 3. Derleyip çalıştırın:
+
+Bağlantı hâlâ başarısızsa uygulama MySQL hata numarası, hedef özeti (şifresiz) ve config
+kaynağını gösterir. Yayın klasöründe `Apartman Yönetim Paneli-V0.1.dll.config` dosyasını da
+kontrol edin — `App.config` değişiklikleri derleme/yayın sonrası bu dosyaya gider.
 
 ```bash
 dotnet restore "Apartman Yönetim Paneli-V0.1/Apartman Yönetim Paneli-V0.1.csproj"
