@@ -4,7 +4,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
     /// Uygulamanın ilk ekranı: kullanıcı adı/şifre ile giriş veya kayıt formuna geçiş.
-    /// Başarılı girişte rol Admin ise FrmAdmin, değilse Form1 (rol paneli) açılır.
+    /// Başarılı girişte rol Admin ise FrmAdmin, değilse FrmAnaPanel (rol paneli) açılır.
     /// </summary>
     public partial class FrmGiris : Form
     {
@@ -91,7 +91,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
                 Form sonrakiForm = string.Equals(rolAdi, Veritabani.RolAdmin, StringComparison.OrdinalIgnoreCase)
                     ? new FrmAdmin(adSoyad)
-                    : new Form1(kullaniciId, adSoyad, rolAdi);
+                    : new FrmAnaPanel(kullaniciId, adSoyad, rolAdi);
 
                 sonrakiForm.FormClosed += (_, _) => Show();
                 sonrakiForm.Show();

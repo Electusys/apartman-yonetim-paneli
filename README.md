@@ -105,16 +105,28 @@ Admin
 
 ```
 apartman-yonetim-paneli/
-├── Apartman Yönetim Paneli-V0.1/   # WinForms kaynak kodu
+├── Apartman Yönetim Paneli-V0.1/
 │   ├── Assets/logo.png            # Marka logosu
 │   ├── App.config                 # Bağlantı + Admin ayarları
-│   ├── UiTema.cs / LogoPanel.cs   # Tema ve logo
-│   └── Form*.cs / Frm*.cs         # Ekranlar
+│   ├── Data/Veritabani.cs         # MySQL erişimi
+│   ├── Ui/
+│   │   ├── UiTema.cs              # Renkler, buton/kart stilleri
+│   │   └── FormIskeleti.cs        # Ortak form iskeleti (sol menü + içerik)
+│   └── Forms/
+│       ├── Auth/                  # Giriş, kayıt
+│       ├── Admin/                 # Admin paneli, personel atama
+│       ├── Shell/FrmAnaPanel.cs   # Rol paneli (ana kabuk)
+│       ├── Yapi/                  # Blok-daire, sakin
+│       ├── Finans/                # Aidat, ödeme, gider
+│       └── Operasyon/             # Duyuru, arıza
 ├── sql/
-│   ├── 00_kurulum.sql             # Veritabanı + temel tablolar
+│   ├── 00_kurulum.sql
+│   ├── 01_demo_kullanici_ve_ariza.sql
 │   └── ApartmanYonetimDB_senaryo_tablolari.sql
 └── README.md
 ```
+
+Her ekran kendi dosyasındadır (`Frm…cs`). Klasör adı modülü gösterir.
 
 ---
 
