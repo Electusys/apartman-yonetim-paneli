@@ -39,7 +39,11 @@ namespace Apartman_Yönetim_Paneli_V0._1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Admin hesabı hazırlanırken bir hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "MySQL bağlantısı / Admin hazırlığı başarısız:\n" + Veritabani.BaglantiHatasiMetni(ex),
+                    "Veritabanı hatası",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 
@@ -98,7 +102,11 @@ namespace Apartman_Yönetim_Paneli_V0._1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Giriş sırasında bir hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Giriş sırasında veritabanı hatası:\n" + Veritabani.BaglantiHatasiMetni(ex),
+                    "Veritabanı hatası",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
 

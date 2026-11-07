@@ -9,6 +9,8 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MySqlConnector" Version="2.6.2" />
+    <!-- App.config ConnectionStrings / AppSettings okumak için (.NET 5+ BCL'de yok). -->
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.14" />
   </ItemGroup>
   <ItemGroup>
     <None Update="Assets\logo.png">
