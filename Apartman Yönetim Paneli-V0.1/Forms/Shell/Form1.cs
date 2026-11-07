@@ -85,10 +85,12 @@ namespace Apartman_Yönetim_Paneli_V0._1
             {
                 Nav(nav, "◆", "Ödeme Yönetimi", () => new FrmOdemeYonetimi(_kullaniciId, _adSoyad));
                 Nav(nav, "▣", "Gider Yönetimi", () => new FrmGiderYonetimi(_kullaniciId, _adSoyad));
+                Nav(nav, "✉", "Duyurular", () => new FrmDuyurular(_kullaniciId, _adSoyad, _rolAdi));
             }
             else if (Rol(Veritabani.RolTeknisyen))
             {
                 Nav(nav, "⚙", "Arıza ve Bakım", () => new FrmAriza(_kullaniciId, _adSoyad, _rolAdi));
+                Nav(nav, "✉", "Duyurular", () => new FrmDuyurular(_kullaniciId, _adSoyad, _rolAdi));
             }
             else
             {

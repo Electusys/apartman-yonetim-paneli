@@ -28,6 +28,8 @@ namespace Apartman_Yönetim_Paneli_V0._1
             form.MinimumSize = new Size(980, 620);
             form.FormBorderStyle = FormBorderStyle.Sizable;
             form.MaximizeBox = true;
+            CiftTampon(form);
+            YumusakForm(form);
         }
 
         public static void Yuvarla(Control kontrol, int yaricap = 12)
@@ -66,13 +68,12 @@ namespace Apartman_Yönetim_Paneli_V0._1
             button.ForeColor = YaziKoyu;
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.MouseOverBackColor = VurguKoyu;
-            button.FlatAppearance.MouseDownBackColor = Vurgu;
             button.Cursor = Cursors.Hand;
             button.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
             button.Height = 44;
             button.UseVisualStyleBackColor = false;
             Yuvarla(button, 10);
+            YumusakButon(button, Vurgu, VurguKoyu, Color.FromArgb(154, 184, 16), YaziKoyu, YaziKoyu);
         }
 
         public static void IkincilButon(Button button)
@@ -82,12 +83,18 @@ namespace Apartman_Yönetim_Paneli_V0._1
             button.FlatStyle = FlatStyle.Flat;
             button.FlatAppearance.BorderColor = Kenar;
             button.FlatAppearance.BorderSize = 1;
-            button.FlatAppearance.MouseOverBackColor = Color.FromArgb(58, 64, 84);
             button.Cursor = Cursors.Hand;
             button.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             button.Height = 42;
             button.UseVisualStyleBackColor = false;
             Yuvarla(button, 10);
+            YumusakButon(
+                button,
+                Kart,
+                Color.FromArgb(64, 70, 90),
+                Color.FromArgb(38, 42, 56),
+                Yazi,
+                Yazi);
         }
 
         public static Button NavButonu(string ikon, string metin)
@@ -99,7 +106,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 Dock = DockStyle.Top,
                 Height = 48,
                 Margin = new Padding(0, 0, 0, 6),
-                BackColor = Color.Transparent,
+                BackColor = Yuzey,
                 ForeColor = Yazi,
                 FlatStyle = FlatStyle.Flat,
                 Cursor = Cursors.Hand,
@@ -107,11 +114,8 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 UseVisualStyleBackColor = false
             };
             button.FlatAppearance.BorderSize = 0;
-            button.FlatAppearance.MouseOverBackColor = Vurgu;
-            button.FlatAppearance.MouseDownBackColor = VurguKoyu;
-            button.MouseEnter += (_, _) => button.ForeColor = YaziKoyu;
-            button.MouseLeave += (_, _) => button.ForeColor = Yazi;
             Yuvarla(button, 10);
+            YumusakButon(button, Yuzey, Vurgu, VurguKoyu, Yazi, YaziKoyu);
             return button;
         }
 
@@ -283,6 +287,310 @@ namespace Apartman_Yönetim_Paneli_V0._1
             kart.Controls.Add(lblNot);
             kart.Controls.Add(lblBaslik);
             return kart;
+        }
+
+        private static readonly Dictionary<Button, ButonAkis> Butonlar = new();
+        private static readonly Dictionary<Form, FormAkis> Formlar = new();
+        private static readonly HashSet<Form> KapanisIzinli = new();
+        private static readonly System.Windows.Forms.Timer Kadran = new() { Interval = 16 };
+        private static bool _kadranBagli;
+
+        private static void CiftTampon(Control kontrol)
+        {
+            typeof(Control)
+                .GetProperty("DoubleBuffered", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.SetValue(kontrol, true);
+        }
+
+        /// <summary>
+        /// Ekran açılış ve kapanışında kısa bir opaklık geçişi.
+        /// </summary>
+        private static void YumusakForm(Form form)
+        {
+            if (Formlar.ContainsKey(form))
+            {
+                return;
+            }
+
+            form.Opacity = 0;
+            Formlar[form] = new FormAkis { Hedef = 1 };
+            form.Shown += (_, _) => OpakligaGit(form, 1, null);
+            form.VisibleChanged += (_, _) =>
+            {
+                if (form.IsDisposed || form.Disposing)
+                {
+                    return;
+                }
+
+                if (!form.Visible)
+                {
+                    if (!KapanisIzinli.Contains(form))
+                    {
+                        OpaklikYaz(form, 0);
+                    }
+
+                    return;
+                }
+
+                if (form.Opacity < 0.98)
+                {
+                    OpakligaGit(form, 1, null);
+                }
+            };
+            form.FormClosing += (_, e) =>
+            {
+                if (KapanisIzinli.Contains(form) || form.Opacity <= 0.04)
+                {
+                    KapanisIzinli.Add(form);
+                    return;
+                }
+
+                e.Cancel = true;
+                OpakligaGit(form, 0, () =>
+                {
+                    KapanisIzinli.Add(form);
+                    if (!form.IsDisposed)
+                    {
+                        form.Close();
+                    }
+                });
+            };
+            form.FormClosed += (_, _) =>
+            {
+                Formlar.Remove(form);
+                KapanisIzinli.Remove(form);
+            };
+        }
+
+        private static void OpakligaGit(Form form, double hedef, Action? bitis)
+        {
+            if (form.IsDisposed)
+            {
+                return;
+            }
+
+            if (!Formlar.TryGetValue(form, out FormAkis? akis))
+            {
+                akis = new FormAkis();
+                Formlar[form] = akis;
+            }
+
+            akis.Hedef = hedef;
+            akis.Bitis = bitis;
+            KadraniBaslat();
+        }
+
+        /// <summary>
+        /// Üzerine gelince ve basınca rengin yumuşakça kayması.
+        /// </summary>
+        private static void YumusakButon(Button button, Color normal, Color uzerinde, Color basili, Color yazi, Color yaziUzerinde)
+        {
+            ButonAkis akis = new()
+            {
+                Normal = normal,
+                Uzerinde = uzerinde,
+                Basili = basili,
+                YaziNormal = yazi,
+                YaziUzerinde = yaziUzerinde,
+                SuAn = normal,
+                YaziSuAn = yazi
+            };
+            akis.HedefiKur();
+            Butonlar[button] = akis;
+            RengiUygula(button, akis);
+
+            button.MouseEnter += (_, _) =>
+            {
+                akis.FareUzerinde = true;
+                akis.HedefiKur();
+                KadraniBaslat();
+            };
+            button.MouseLeave += (_, _) =>
+            {
+                akis.FareUzerinde = false;
+                akis.BasiliMi = false;
+                akis.HedefiKur();
+                KadraniBaslat();
+            };
+            button.MouseDown += (_, _) =>
+            {
+                akis.BasiliMi = true;
+                akis.HedefiKur();
+                KadraniBaslat();
+            };
+            button.MouseUp += (_, _) =>
+            {
+                akis.BasiliMi = false;
+                akis.HedefiKur();
+                KadraniBaslat();
+            };
+            button.Disposed += (_, _) => Butonlar.Remove(button);
+        }
+
+        private static void KadraniBaslat()
+        {
+            if (!_kadranBagli)
+            {
+                _kadranBagli = true;
+                Kadran.Tick += (_, _) => Kare();
+            }
+
+            if (!Kadran.Enabled)
+            {
+                Kadran.Start();
+            }
+        }
+
+        private static void Kare()
+        {
+            bool suruyor = false;
+            foreach ((Button button, ButonAkis akis) in Butonlar.ToList())
+            {
+                if (button.IsDisposed)
+                {
+                    Butonlar.Remove(button);
+                    continue;
+                }
+
+                if (Yakin(akis.SuAn, akis.Hedef) && Yakin(akis.YaziSuAn, akis.YaziHedef))
+                {
+                    if (akis.SuAn != akis.Hedef || akis.YaziSuAn != akis.YaziHedef)
+                    {
+                        akis.SuAn = akis.Hedef;
+                        akis.YaziSuAn = akis.YaziHedef;
+                        RengiUygula(button, akis);
+                    }
+
+                    continue;
+                }
+
+                akis.SuAn = Yaklastir(akis.SuAn, akis.Hedef);
+                akis.YaziSuAn = Yaklastir(akis.YaziSuAn, akis.YaziHedef);
+                RengiUygula(button, akis);
+                suruyor = true;
+            }
+
+            foreach ((Form form, FormAkis akis) in Formlar.ToList())
+            {
+                if (form.IsDisposed)
+                {
+                    Formlar.Remove(form);
+                    continue;
+                }
+
+                if (!form.Visible && akis.Hedef > 0)
+                {
+                    continue;
+                }
+
+                double fark = akis.Hedef - form.Opacity;
+                if (Math.Abs(fark) < 0.02)
+                {
+                    if (Math.Abs(form.Opacity - akis.Hedef) >= 0.001)
+                    {
+                        OpaklikYaz(form, akis.Hedef);
+                    }
+
+                    Action? bitis = akis.Bitis;
+                    akis.Bitis = null;
+                    bitis?.Invoke();
+                    continue;
+                }
+
+                OpaklikYaz(form, Math.Clamp(form.Opacity + (fark * 0.22), 0, 1));
+                suruyor = true;
+            }
+
+            foreach ((Form form, FormAkis akis) in Formlar.ToList())
+            {
+                if (!form.IsDisposed && form.Visible && Math.Abs(form.Opacity - akis.Hedef) >= 0.02)
+                {
+                    suruyor = true;
+                }
+            }
+
+            if (!suruyor)
+            {
+                Kadran.Stop();
+            }
+        }
+
+        private static void OpaklikYaz(Form form, double deger)
+        {
+            if (form.IsDisposed || form.Disposing)
+            {
+                return;
+            }
+
+            try
+            {
+                form.Opacity = deger;
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        private static void RengiUygula(Button button, ButonAkis akis)
+        {
+            button.BackColor = akis.SuAn;
+            button.FlatAppearance.MouseOverBackColor = akis.SuAn;
+            button.FlatAppearance.MouseDownBackColor = akis.SuAn;
+            button.ForeColor = akis.YaziSuAn;
+        }
+
+        private static Color Yaklastir(Color suAn, Color hedef)
+        {
+            if (Yakin(suAn, hedef))
+            {
+                return hedef;
+            }
+
+            const float adim = 0.22f;
+            return Color.FromArgb(
+                (int)(suAn.A + ((hedef.A - suAn.A) * adim)),
+                (int)(suAn.R + ((hedef.R - suAn.R) * adim)),
+                (int)(suAn.G + ((hedef.G - suAn.G) * adim)),
+                (int)(suAn.B + ((hedef.B - suAn.B) * adim)));
+        }
+
+        private static bool Yakin(Color a, Color b)
+        {
+            return Math.Abs(a.A - b.A) + Math.Abs(a.R - b.R) + Math.Abs(a.G - b.G) + Math.Abs(a.B - b.B) < 10;
+        }
+
+        private sealed class ButonAkis
+        {
+            public Color Normal;
+            public Color Uzerinde;
+            public Color Basili;
+            public Color YaziNormal;
+            public Color YaziUzerinde;
+            public Color SuAn;
+            public Color Hedef;
+            public Color YaziSuAn;
+            public Color YaziHedef;
+            public bool FareUzerinde;
+            public bool BasiliMi;
+
+            public void HedefiKur()
+            {
+                if (BasiliMi)
+                {
+                    Hedef = Basili;
+                    YaziHedef = YaziUzerinde;
+                    return;
+                }
+
+                Hedef = FareUzerinde ? Uzerinde : Normal;
+                YaziHedef = FareUzerinde ? YaziUzerinde : YaziNormal;
+            }
+        }
+
+        private sealed class FormAkis
+        {
+            public double Hedef { get; set; } = 1;
+            public Action? Bitis { get; set; }
         }
     }
 

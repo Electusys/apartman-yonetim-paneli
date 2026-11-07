@@ -5,6 +5,18 @@
 
 USE ApartmanYonetimDB;
 
+CREATE TABLE IF NOT EXISTS DuyuruYorumlari (
+    YorumID     INT AUTO_INCREMENT PRIMARY KEY,
+    DuyuruID    INT      NOT NULL,
+    KullaniciID INT      NOT NULL,
+    Yorum       TEXT     NOT NULL,
+    Tarih       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Yorum_Duyuru FOREIGN KEY (DuyuruID) REFERENCES Duyurular (DuyuruID)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT FK_Yorum_Kullanici FOREIGN KEY (KullaniciID) REFERENCES Kullanicilar (KullaniciID)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Bağımlı kayıtları temizle
 DELETE FROM ArizaBildirimleri;
 DELETE FROM ArizaTalepleri;
@@ -12,6 +24,7 @@ DELETE FROM Odemeler;
 DELETE FROM AidatBorclari;
 DELETE FROM AidatDonemleri;
 DELETE FROM Giderler;
+DELETE FROM DuyuruYorumlari;
 DELETE FROM Duyurular;
 DELETE FROM Sakinler;
 UPDATE Daireler SET KullaniciID = NULL;
@@ -88,6 +101,14 @@ VALUES
 (@sakin, @daireA1, 'Bahçe', 'Diğer',
  'Bahçe musluğu damlatıyor, su kaybı var.', 'Düşük', 'Tamamlandı',
  'Conta değiştirildi.', DATE_SUB(NOW(), INTERVAL 8 DAY), DATE_SUB(NOW(), INTERVAL 6 DAY), @teknisyen);
+
+INSERT INTO Duyurular (Baslik, Icerik, YayimTarihi, OlusturanKullaniciID) VALUES
+('Asansör bakımı', 'A blok asansörü 12 Kasım saat 10:00-12:00 arasında bakımda olacaktır.', NOW(), @yonetici),
+('Su kesintisi', 'Yarın 09:00-11:00 arası şebeke çalışması nedeniyle su kesilecektir.', NOW(), @yonetici);
+
+SET @duyuru1 := (SELECT DuyuruID FROM Duyurular WHERE Baslik = 'Asansör bakımı' ORDER BY DuyuruID DESC LIMIT 1);
+INSERT INTO DuyuruYorumlari (DuyuruID, KullaniciID, Yorum) VALUES
+(@duyuru1, @sakin, 'Bilgi için teşekkürler, o saatte evde olmayacağım.');
 
 SELECT KullaniciID, KullaniciAdi, Sifre, RolAdi FROM Kullanicilar ORDER BY KullaniciID;
 SELECT ArizaID, Alan, Kategori, Oncelik, Durum, LEFT(Aciklama, 50) AS Aciklama FROM ArizaBildirimleri ORDER BY ArizaID;
