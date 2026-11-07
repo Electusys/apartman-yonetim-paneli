@@ -3,17 +3,17 @@ namespace Apartman_Yönetim_Paneli_V0._1
     /// <summary>
     /// Rol paneli: solda dikey navigasyon, sağda analiz kartları ve görev listesi.
     /// </summary>
-    public partial class Form1 : Form
+    public partial class FrmAnaPanel : Form
     {
         private readonly int _kullaniciId;
         private readonly string _adSoyad;
         private readonly string _rolAdi;
 
-        public Form1() : this(0, "Kullanıcı", "Apartman Sakini")
+        public FrmAnaPanel() : this(0, "Kullanıcı", "Apartman Sakini")
         {
         }
 
-        public Form1(int kullaniciId, string adSoyad, string rolAdi)
+        public FrmAnaPanel(int kullaniciId, string adSoyad, string rolAdi)
         {
             _kullaniciId = kullaniciId;
             _adSoyad = adSoyad;
@@ -21,7 +21,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             InitializeComponent();
         }
 
-        private void Form1_Load(object? sender, EventArgs e)
+        private void FrmAnaPanel_Load(object? sender, EventArgs e)
         {
             UiTema.FormAyarla(this);
             tableAna.BackColor = UiTema.ArkaPlan;

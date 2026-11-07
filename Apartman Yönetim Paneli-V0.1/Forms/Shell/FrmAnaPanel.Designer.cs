@@ -1,6 +1,6 @@
 namespace Apartman_Yönetim_Paneli_V0._1
 {
-    partial class Form1
+    partial class FrmAnaPanel
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -232,7 +232,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             lblKartIcerik.TabIndex = 0;
             lblKartIcerik.Text = "Apartman işlemleri bu panel üzerinden yönetilecek.";
             // 
-            // Form1
+            // FrmAnaPanel
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -240,10 +240,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
             ClientSize = new Size(1100, 700);
             Controls.Add(tableAna);
             MinimumSize = new Size(920, 580);
-            Name = "Form1";
+            Name = "FrmAnaPanel";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Apartman Yönetim Paneli";
-            Load += Form1_Load;
+            Load += FrmAnaPanel_Load;
             tableAna.ResumeLayout(false);
             pnlSol.ResumeLayout(false);
             pnlSol.PerformLayout();
