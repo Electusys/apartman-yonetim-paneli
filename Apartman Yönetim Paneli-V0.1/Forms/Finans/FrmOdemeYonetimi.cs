@@ -19,7 +19,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
         public FrmOdemeYonetimi(int kullaniciId, string adSoyad)
         {
             _kullaniciId = kullaniciId;
-            Panel govde = FormIskeleti.Olustur(this, adSoyad, "Ödeme Yönetimi", "Daire aidat borcunu seçip ödemeyi kaydedin.");
+            Panel govde = FormIskeleti.Olustur(this, adSoyad, "Ödeme Yönetimi", "Blok ve daireyi seçip ödemeyi kaydedin.");
 
             TableLayoutPanel tablo = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 4, ColumnCount = 1 };
             tablo.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
@@ -29,7 +29,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
             _dgvBorclar = FormIskeleti.Tablo();
             _dgvBorclar.SelectionChanged += (_, _) => OzetiGuncelle();
-            _lblOzet = new Label { Dock = DockStyle.Fill, Height = 28, ForeColor = UiTema.Vurgu, Text = "Bir borç satırı seçiniz." };
+            _lblOzet = new Label { Dock = DockStyle.Fill, Height = 28, ForeColor = UiTema.Vurgu, Text = "Blok / daire seçin." };
             _nudTutar = FormIskeleti.Para();
             _dtpTarih = FormIskeleti.Tarih();
             _cmbYontem = FormIskeleti.Combo();
@@ -59,17 +59,23 @@ namespace Apartman_Yönetim_Paneli_V0._1
             tablo.Controls.Add(form, 0, 2);
             tablo.Controls.Add(_dgvOdemeler, 0, 3);
             govde.Controls.Add(tablo);
-            Yukle();
+            Load += (_, _) => Yukle();
         }
 
         private int? SeciliBorcId()
         {
-            if (_dgvBorclar.CurrentRow == null)
+            if (_dgvBorclar.CurrentRow == null || !_dgvBorclar.Columns.Contains("AidatBorcID"))
             {
                 return null;
             }
 
-            return Convert.ToInt32(_dgvBorclar.CurrentRow.Cells["AidatBorcID"].Value);
+            object? id = _dgvBorclar.CurrentRow.Cells["AidatBorcID"].Value;
+            if (id == null || id == DBNull.Value)
+            {
+                return null;
+            }
+
+            return Convert.ToInt32(id);
         }
 
         private void Yukle()
@@ -77,13 +83,16 @@ namespace Apartman_Yönetim_Paneli_V0._1
             try
             {
                 _dgvBorclar.DataSource = Veritabani.TabloGetir(
-                    @"SELECT b.AidatBorcID, CONCAT(IFNULL(d.Blok, '-'), ' / ', d.DaireNo) AS Daire, dnm.Donem,
-                             b.Tutar, b.KalanTutar, b.Durum
-                      FROM AidatBorclari b
-                      INNER JOIN Daireler d ON d.DaireID = b.DaireID
-                      INNER JOIN AidatDonemleri dnm ON dnm.AidatDonemID = b.AidatDonemID
-                      ORDER BY b.KalanTutar DESC, dnm.Donem DESC");
-                UiTema.KolonBasliklari(_dgvBorclar, ("AidatBorcID", "ID"), ("KalanTutar", "Kalan"));
+                    @"SELECT CONCAT(IFNULL(d.Blok, '-'), ' / ', d.DaireNo) AS Daire,
+                             IFNULL(dnm.Donem, '—') AS Donem,
+                             b.AidatBorcID, IFNULL(b.Tutar, 0) AS Tutar,
+                             IFNULL(b.KalanTutar, 0) AS KalanTutar,
+                             IFNULL(b.Durum, 'Borç yok') AS Durum
+                      FROM Daireler d
+                      LEFT JOIN AidatBorclari b ON b.DaireID = d.DaireID
+                      LEFT JOIN AidatDonemleri dnm ON dnm.AidatDonemID = b.AidatDonemID
+                      ORDER BY d.Blok, d.DaireNo, dnm.Donem DESC");
+                UiTema.KolonBasliklari(_dgvBorclar, ("AidatBorcID", "Borç no"), ("KalanTutar", "Kalan"));
 
                 _dgvOdemeler.DataSource = Veritabani.TabloGetir(
                     @"SELECT o.OdemeID, CONCAT(IFNULL(d.Blok, '-'), ' / ', d.DaireNo) AS Daire, dnm.Donem,
@@ -107,15 +116,23 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private void OzetiGuncelle()
         {
-            if (_dgvBorclar.CurrentRow == null)
+            if (_dgvBorclar.CurrentRow == null || !_dgvBorclar.Columns.Contains("Daire"))
             {
-                _lblOzet.Text = "Bir borç satırı seçiniz.";
+                _lblOzet.Text = "Blok / daire seçin.";
+                return;
+            }
+
+            string daire = Convert.ToString(_dgvBorclar.CurrentRow.Cells["Daire"].Value) ?? "";
+            if (SeciliBorcId() == null)
+            {
+                _lblOzet.Text = string.IsNullOrWhiteSpace(daire)
+                    ? "Blok / daire seçin."
+                    : $"{daire} — bu daire için aidat borcu yok.";
                 return;
             }
 
             decimal tutar = Convert.ToDecimal(_dgvBorclar.CurrentRow.Cells["Tutar"].Value);
             decimal kalan = Convert.ToDecimal(_dgvBorclar.CurrentRow.Cells["KalanTutar"].Value);
-            string daire = Convert.ToString(_dgvBorclar.CurrentRow.Cells["Daire"].Value) ?? "";
             _lblOzet.Text = $"{daire} — Toplam borç: {tutar:N2} ₺  |  Kalan: {kalan:N2} ₺";
             if (kalan > 0)
             {
@@ -128,7 +145,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             int? borcId = SeciliBorcId();
             if (borcId == null)
             {
-                FormIskeleti.Uyari("Önce bir daire / aidat kaydı seçiniz.");
+                FormIskeleti.Uyari("Seçilen daire için açık aidat borcu yok. Önce yönetici aidat oluşturmalı.");
                 return;
             }
 
