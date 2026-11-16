@@ -1,8 +1,5 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
-
     /// <summary>
     /// Yönetici ve muhasebeci: seçilen aidat borcuna ödeme kaydeder, kalan tutarı günceller.
     /// </summary>
@@ -163,24 +160,23 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
             try
             {
-                Veritabani.Calistir(
-                    @"INSERT INTO Odemeler (AidatBorcID, Tutar, OdemeTarihi, OdemeYontemi, KaydedenKullaniciID)
-                      VALUES (@borc, @tutar, @tarih, @yontem, @kullanici)",
-                    ("@borc", borcId.Value),
-                    ("@tutar", odeme),
-                    ("@tarih", _dtpTarih.Value.Date),
-                    ("@yontem", _cmbYontem.SelectedItem?.ToString() ?? "Nakit"),
-                    ("@kullanici", _kullaniciId));
-
-                decimal yeniKalan = kalan - odeme;
                 decimal toplam = Convert.ToDecimal(_dgvBorclar.CurrentRow.Cells["Tutar"].Value);
-                Veritabani.Calistir(
-                    "UPDATE AidatBorclari SET KalanTutar = @kalan, Durum = @durum WHERE AidatBorcID = @id",
-                    ("@kalan", yeniKalan),
-                    ("@durum", Veritabani.BorcDurumu(yeniKalan, toplam)),
-                    ("@id", borcId.Value));
+                IslemSonucu sonuc = AidatServisi.OdemeKaydet(
+                    borcId.Value,
+                    odeme,
+                    kalan,
+                    toplam,
+                    _dtpTarih.Value,
+                    _cmbYontem.SelectedItem?.ToString() ?? "Nakit",
+                    _kullaniciId);
 
-                FormIskeleti.Bilgi("Ödeme kaydedildi, kalan borç güncellendi.");
+                if (!sonuc.Basarili)
+                {
+                    FormIskeleti.Uyari(sonuc.Mesaj);
+                    return;
+                }
+
+                FormIskeleti.Bilgi(sonuc.Mesaj);
                 Yukle();
             }
             catch (Exception ex)

@@ -1,11 +1,7 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
-
     /// <summary>
     /// Yönetici: dönem + tutar + son ödeme tarihi girer, daireleri seçer, borç satırları oluşur.
-    /// Aynı daire + aynı dönem ikinci kez yazılmaz.
     /// </summary>
     public class FrmAidatYonetimi : Form
     {
@@ -108,86 +104,27 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private void BtnOlustur_Click(object? sender, EventArgs e)
         {
-            if (_nudTutar.Value <= 0)
-            {
-                FormIskeleti.Uyari("Tutar geçersiz. Sıfırdan büyük bir tutar giriniz.");
-                return;
-            }
-
-            List<int> daireler = new List<int>();
-            foreach (object item in _lstDaireler.CheckedItems)
-            {
-                if (item is ListeKalemi kalem)
-                {
-                    daireler.Add(kalem.Id);
-                }
-            }
-
-            if (daireler.Count == 0)
-            {
-                FormIskeleti.Uyari("En az bir daire seçiniz.");
-                return;
-            }
-
-            string donem = _dtpDonem.Value.ToString("yyyy-MM");
-            decimal tutar = _nudTutar.Value;
-            DateTime sonOdeme = _dtpSonOdeme.Value.Date;
-            int eklenen = 0;
-            int atlanan = 0;
+            List<int> daireler = _lstDaireler.CheckedItems
+                .OfType<ListeKalemi>()
+                .Select(k => k.Id)
+                .ToList();
 
             try
             {
-                using MySqlConnection baglanti = Veritabani.BaglantiAc();
-                using MySqlTransaction tx = baglanti.BeginTransaction();
+                IslemSonucu sonuc = AidatServisi.AidatOlustur(
+                    _dtpDonem.Value.ToString("yyyy-MM"),
+                    _nudTutar.Value,
+                    _dtpSonOdeme.Value,
+                    _kullaniciId,
+                    daireler);
 
-                long donemId;
-                using (MySqlCommand ara = new MySqlCommand("SELECT AidatDonemID FROM AidatDonemleri WHERE Donem = @donem", baglanti, tx))
+                if (!sonuc.Basarili)
                 {
-                    ara.Parameters.AddWithValue("@donem", donem);
-                    object? id = ara.ExecuteScalar();
-                    if (id == null)
-                    {
-                        using MySqlCommand ekle = new MySqlCommand(
-                            @"INSERT INTO AidatDonemleri (Donem, Tutar, SonOdemeTarihi, OlusturanKullaniciID)
-                              VALUES (@donem, @tutar, @son, @kullanici)", baglanti, tx);
-                        ekle.Parameters.AddWithValue("@donem", donem);
-                        ekle.Parameters.AddWithValue("@tutar", tutar);
-                        ekle.Parameters.AddWithValue("@son", sonOdeme);
-                        ekle.Parameters.AddWithValue("@kullanici", _kullaniciId);
-                        ekle.ExecuteNonQuery();
-                        donemId = ekle.LastInsertedId;
-                    }
-                    else
-                    {
-                        donemId = Convert.ToInt64(id);
-                    }
+                    FormIskeleti.Uyari(sonuc.Mesaj);
+                    return;
                 }
 
-                foreach (int daireId in daireler)
-                {
-                    using MySqlCommand kontrol = new MySqlCommand(
-                        "SELECT COUNT(*) FROM AidatBorclari WHERE AidatDonemID = @donem AND DaireID = @daire", baglanti, tx);
-                    kontrol.Parameters.AddWithValue("@donem", donemId);
-                    kontrol.Parameters.AddWithValue("@daire", daireId);
-                    if (Convert.ToInt32(kontrol.ExecuteScalar()) > 0)
-                    {
-                        atlanan++;
-                        continue;
-                    }
-
-                    using MySqlCommand borc = new MySqlCommand(
-                        @"INSERT INTO AidatBorclari (AidatDonemID, DaireID, Tutar, KalanTutar, Durum)
-                          VALUES (@donem, @daire, @tutar, @tutar, @durum)", baglanti, tx);
-                    borc.Parameters.AddWithValue("@donem", donemId);
-                    borc.Parameters.AddWithValue("@daire", daireId);
-                    borc.Parameters.AddWithValue("@tutar", tutar);
-                    borc.Parameters.AddWithValue("@durum", Veritabani.BorcOdenmedi);
-                    borc.ExecuteNonQuery();
-                    eklenen++;
-                }
-
-                tx.Commit();
-                FormIskeleti.Bilgi($"{eklenen} daire için aidat borcu oluşturuldu." + (atlanan > 0 ? $" {atlanan} dairede bu dönem zaten kayıtlıydı, mükerrer yazılmadı." : ""));
+                FormIskeleti.Bilgi(sonuc.Mesaj);
                 Yukle();
             }
             catch (Exception ex)

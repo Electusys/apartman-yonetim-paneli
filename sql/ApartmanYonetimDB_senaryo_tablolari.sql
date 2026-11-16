@@ -153,6 +153,23 @@ CREATE TABLE IF NOT EXISTS Duyurular (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------------------------------
+-- Tablo 8b — Duyuru yorumları (aktör: tüm roller)
+-- -----------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS DuyuruYorumlari (
+    YorumID     INT AUTO_INCREMENT PRIMARY KEY,
+    DuyuruID    INT  NOT NULL,
+    KullaniciID INT  NOT NULL,
+    Yorum       TEXT NOT NULL,
+    Tarih       DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT FK_Yorum_Duyuru
+        FOREIGN KEY (DuyuruID) REFERENCES Duyurular (DuyuruID)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT FK_Yorum_Kullanici
+        FOREIGN KEY (KullaniciID) REFERENCES Kullanicilar (KullaniciID)
+        ON UPDATE CASCADE ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- -----------------------------------------------------------------------------
 -- Tablo 9-10 — Arıza bildirimi ve durum güncelleme
 -- Durum: Beklemede / Islem Yapiliyor / Tamamlandi
 -- -----------------------------------------------------------------------------
