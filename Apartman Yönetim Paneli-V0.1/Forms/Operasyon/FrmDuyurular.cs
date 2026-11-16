@@ -89,24 +89,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             tablo.Controls.Add(yorumlar, 0, 2);
 
             govde.Controls.Add(tablo);
-            YorumTablosunuHazirla();
             Yukle();
-        }
-
-        private static void YorumTablosunuHazirla()
-        {
-            Veritabani.Calistir(
-                @"CREATE TABLE IF NOT EXISTS DuyuruYorumlari (
-                    YorumID INT AUTO_INCREMENT PRIMARY KEY,
-                    DuyuruID INT NOT NULL,
-                    KullaniciID INT NOT NULL,
-                    Yorum TEXT NOT NULL,
-                    Tarih DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    CONSTRAINT FK_Yorum_Duyuru FOREIGN KEY (DuyuruID) REFERENCES Duyurular (DuyuruID)
-                        ON UPDATE CASCADE ON DELETE CASCADE,
-                    CONSTRAINT FK_Yorum_Kullanici FOREIGN KEY (KullaniciID) REFERENCES Kullanicilar (KullaniciID)
-                        ON UPDATE CASCADE ON DELETE CASCADE
-                  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         }
 
         private void Yukle()

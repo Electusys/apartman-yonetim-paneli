@@ -1,5 +1,3 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
@@ -52,76 +50,35 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 ForeColor = UiTema.Vurgu,
                 TextAlign = ContentAlignment.MiddleLeft
             };
-            Button cikis = btnCikis;
             UiTema.SolSeritKur(
                 pnlSol,
                 "Admin Paneli",
                 "Yönetici rolünü yalnızca Admin atar. Muhasebeci ve teknisyen ataması yönetici panelinden yapılır.",
                 kullanici,
-                cikis);
+                btnCikis);
 
             YoneticileriYukle();
         }
 
         private void btnYoneticiOlustur_Click(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtAd.Text) ||
-                string.IsNullOrWhiteSpace(txtSoyad.Text) ||
-                string.IsNullOrWhiteSpace(txtKullaniciAdi.Text) ||
-                string.IsNullOrWhiteSpace(txtSifre.Text) ||
-                string.IsNullOrWhiteSpace(txtSifreTekrar.Text))
-            {
-                MessageBox.Show("Lütfen tüm alanları doldurunuz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (txtSifre.Text != txtSifreTekrar.Text)
-            {
-                MessageBox.Show("Şifreler birbiriyle eşleşmiyor.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string ad = txtAd.Text.Trim();
-            string soyad = txtSoyad.Text.Trim();
-            string kullaniciAdi = txtKullaniciAdi.Text.Trim();
-            string sifre = txtSifre.Text;
-
-            if (string.Equals(kullaniciAdi, Veritabani.AdminKullaniciAdi, StringComparison.OrdinalIgnoreCase))
-            {
-                MessageBox.Show("Admin kullanıcı adı değiştirilemez ve başkasına verilemez.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
+                IslemSonucu sonuc = KullaniciServisi.Olustur(
+                    txtAd.Text,
+                    txtSoyad.Text,
+                    txtKullaniciAdi.Text,
+                    txtSifre.Text,
+                    txtSifreTekrar.Text,
+                    Veritabani.RolYonetici);
 
-                using (MySqlCommand kontrolKomut = new MySqlCommand(
-                    "SELECT COUNT(*) FROM Kullanicilar WHERE KullaniciAdi = @kullaniciAdi", baglanti))
+                if (!sonuc.Basarili)
                 {
-                    kontrolKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    int kayitSayisi = Convert.ToInt32(kontrolKomut.ExecuteScalar());
-                    if (kayitSayisi > 0)
-                    {
-                        MessageBox.Show("Bu kullanıcı adı zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    FormIskeleti.Uyari(sonuc.Mesaj);
+                    return;
                 }
 
-                using (MySqlCommand ekleKomut = new MySqlCommand(
-                    @"INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi)
-                      VALUES (@ad, @soyad, @kullaniciAdi, @sifre, @rolAdi)", baglanti))
-                {
-                    ekleKomut.Parameters.AddWithValue("@ad", ad);
-                    ekleKomut.Parameters.AddWithValue("@soyad", soyad);
-                    ekleKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    ekleKomut.Parameters.AddWithValue("@sifre", sifre);
-                    ekleKomut.Parameters.AddWithValue("@rolAdi", Veritabani.RolYonetici);
-                    ekleKomut.ExecuteNonQuery();
-                }
-
-                MessageBox.Show("Apartman yöneticisi hesabı oluşturuldu.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                FormIskeleti.Bilgi("Apartman yöneticisi hesabı oluşturuldu.");
                 txtAd.Clear();
                 txtSoyad.Clear();
                 txtKullaniciAdi.Clear();
@@ -129,13 +86,9 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 txtSifreTekrar.Clear();
                 YoneticileriYukle();
             }
-            catch (MySqlException ex) when (ex.Number == 1062)
-            {
-                MessageBox.Show("Bu kullanıcı adı zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
             catch (Exception ex)
             {
-                MessageBox.Show("Yönetici oluşturulurken bir hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FormIskeleti.Hata(ex, "Yönetici oluşturulurken bir hata oluştu");
             }
         }
 
@@ -143,36 +96,12 @@ namespace Apartman_Yönetim_Paneli_V0._1
         {
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-                using MySqlCommand komut = new MySqlCommand(
-                    @"SELECT KullaniciID, Ad, Soyad, KullaniciAdi, RolAdi
-                      FROM Kullanicilar
-                      WHERE RolAdi = @rolAdi
-                      ORDER BY KullaniciID DESC", baglanti);
-                komut.Parameters.AddWithValue("@rolAdi", Veritabani.RolYonetici);
-
-                using MySqlDataAdapter adaptor = new MySqlDataAdapter(komut);
-                System.Data.DataTable tablo = new System.Data.DataTable();
-                adaptor.Fill(tablo);
-                dgvYoneticiler.DataSource = tablo;
-
-                if (dgvYoneticiler.Columns["KullaniciID"] is DataGridViewColumn idKolon)
-                {
-                    idKolon.HeaderText = "ID";
-                }
-                if (dgvYoneticiler.Columns["KullaniciAdi"] is DataGridViewColumn kullaniciKolon)
-                {
-                    kullaniciKolon.HeaderText = "Kullanıcı Adı";
-                }
-                if (dgvYoneticiler.Columns["RolAdi"] is DataGridViewColumn rolKolon)
-                {
-                    rolKolon.HeaderText = "Rol";
-                }
+                dgvYoneticiler.DataSource = KullaniciServisi.RolleListele(Veritabani.RolYonetici);
+                KullaniciServisi.KullaniciGridBasliklari(dgvYoneticiler);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Yönetici listesi yüklenemedi:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FormIskeleti.Hata(ex, "Yönetici listesi yüklenemedi");
             }
         }
 

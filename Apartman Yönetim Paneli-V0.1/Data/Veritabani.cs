@@ -53,7 +53,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
         public static DataTable TabloGetir(string sql, params (string Ad, object? Deger)[] parametreler)
         {
             using MySqlConnection baglanti = BaglantiAc();
-            using MySqlCommand komut = Komut(baglanti, sql, parametreler);
+            using MySqlCommand komut = YeniKomut(baglanti, null, sql, parametreler);
             using MySqlDataAdapter adaptor = new MySqlDataAdapter(komut);
             DataTable tablo = new DataTable();
             adaptor.Fill(tablo);
@@ -63,21 +63,21 @@ namespace Apartman_Yönetim_Paneli_V0._1
         public static object? Skaler(string sql, params (string Ad, object? Deger)[] parametreler)
         {
             using MySqlConnection baglanti = BaglantiAc();
-            using MySqlCommand komut = Komut(baglanti, sql, parametreler);
+            using MySqlCommand komut = YeniKomut(baglanti, null, sql, parametreler);
             return komut.ExecuteScalar();
         }
 
         public static int Calistir(string sql, params (string Ad, object? Deger)[] parametreler)
         {
             using MySqlConnection baglanti = BaglantiAc();
-            using MySqlCommand komut = Komut(baglanti, sql, parametreler);
+            using MySqlCommand komut = YeniKomut(baglanti, null, sql, parametreler);
             return komut.ExecuteNonQuery();
         }
 
         public static long EkleVeId(string sql, params (string Ad, object? Deger)[] parametreler)
         {
             using MySqlConnection baglanti = BaglantiAc();
-            using MySqlCommand komut = Komut(baglanti, sql, parametreler);
+            using MySqlCommand komut = YeniKomut(baglanti, null, sql, parametreler);
             komut.ExecuteNonQuery();
             return komut.LastInsertedId;
         }
@@ -87,9 +87,32 @@ namespace Apartman_Yönetim_Paneli_V0._1
             return Convert.ToInt32(Skaler(sql, parametreler) ?? 0);
         }
 
-        private static MySqlCommand Komut(MySqlConnection baglanti, string sql, (string Ad, object? Deger)[] parametreler)
+        /// <summary>
+        /// Birden fazla yazma işlemini tek transaction içinde çalıştırır; hata olursa geri alır.
+        /// </summary>
+        public static void IslemIcinde(Action<MySqlConnection, MySqlTransaction> islem)
         {
-            MySqlCommand komut = new MySqlCommand(sql, baglanti);
+            using MySqlConnection baglanti = BaglantiAc();
+            using MySqlTransaction tx = baglanti.BeginTransaction();
+            try
+            {
+                islem(baglanti, tx);
+                tx.Commit();
+            }
+            catch
+            {
+                tx.Rollback();
+                throw;
+            }
+        }
+
+        public static MySqlCommand YeniKomut(
+            MySqlConnection baglanti,
+            MySqlTransaction? tx,
+            string sql,
+            params (string Ad, object? Deger)[] parametreler)
+        {
+            MySqlCommand komut = new MySqlCommand(sql, baglanti, tx);
             foreach ((string ad, object? deger) in parametreler)
             {
                 komut.Parameters.AddWithValue(ad, deger ?? DBNull.Value);

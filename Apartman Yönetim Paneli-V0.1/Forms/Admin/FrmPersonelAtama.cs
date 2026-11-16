@@ -1,10 +1,7 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
     /// Apartman yöneticisinin muhasebeci ve teknisyen hesabı açtığı ekran.
-    /// ComboBox'ta yalnızca bu iki rol vardır; yönetici kendine Admin veya başka yönetici veremez.
     /// </summary>
     public partial class FrmPersonelAtama : Form
     {
@@ -60,75 +57,33 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private void FrmPersonelAtama_Load(object? sender, EventArgs e)
         {
+            // Designer bağlantısı için tutuluyor; hazırlık kurucuda.
         }
 
         private void btnPersonelOlustur_Click(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtAd.Text) ||
-                string.IsNullOrWhiteSpace(txtSoyad.Text) ||
-                string.IsNullOrWhiteSpace(txtKullaniciAdi.Text) ||
-                string.IsNullOrWhiteSpace(txtSifre.Text) ||
-                string.IsNullOrWhiteSpace(txtSifreTekrar.Text) ||
-                cmbRol.SelectedIndex < 0)
-            {
-                MessageBox.Show("Lütfen tüm alanları doldurunuz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            if (txtSifre.Text != txtSifreTekrar.Text)
-            {
-                MessageBox.Show("Şifreler birbiriyle eşleşmiyor.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
             string rolAdi = cmbRol.SelectedItem?.ToString() ?? string.Empty;
-            if (rolAdi != Veritabani.RolMuhasebeci && rolAdi != Veritabani.RolTeknisyen)
-            {
-                MessageBox.Show("Yönetici yalnızca muhasebeci veya teknisyen atayabilir.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string ad = txtAd.Text.Trim();
-            string soyad = txtSoyad.Text.Trim();
-            string kullaniciAdi = txtKullaniciAdi.Text.Trim();
-            string sifre = txtSifre.Text;
-
-            if (string.Equals(kullaniciAdi, Veritabani.AdminKullaniciAdi, StringComparison.OrdinalIgnoreCase))
-            {
-                MessageBox.Show("Admin kullanıcı adı başkasına verilemez.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
 
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
+                IslemSonucu sonuc = KullaniciServisi.Olustur(
+                    txtAd.Text,
+                    txtSoyad.Text,
+                    txtKullaniciAdi.Text,
+                    txtSifre.Text,
+                    txtSifreTekrar.Text,
+                    rolAdi,
+                    "Yönetici yalnızca muhasebeci veya teknisyen atayabilir.",
+                    Veritabani.RolMuhasebeci,
+                    Veritabani.RolTeknisyen);
 
-                using (MySqlCommand kontrolKomut = new MySqlCommand(
-                    "SELECT COUNT(*) FROM Kullanicilar WHERE KullaniciAdi = @kullaniciAdi", baglanti))
+                if (!sonuc.Basarili)
                 {
-                    kontrolKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    int kayitSayisi = Convert.ToInt32(kontrolKomut.ExecuteScalar());
-                    if (kayitSayisi > 0)
-                    {
-                        MessageBox.Show("Bu kullanıcı adı zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    FormIskeleti.Uyari(sonuc.Mesaj);
+                    return;
                 }
 
-                using (MySqlCommand ekleKomut = new MySqlCommand(
-                    @"INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi)
-                      VALUES (@ad, @soyad, @kullaniciAdi, @sifre, @rolAdi)", baglanti))
-                {
-                    ekleKomut.Parameters.AddWithValue("@ad", ad);
-                    ekleKomut.Parameters.AddWithValue("@soyad", soyad);
-                    ekleKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    ekleKomut.Parameters.AddWithValue("@sifre", sifre);
-                    ekleKomut.Parameters.AddWithValue("@rolAdi", rolAdi);
-                    ekleKomut.ExecuteNonQuery();
-                }
-
-                MessageBox.Show($"{rolAdi} hesabı oluşturuldu.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                FormIskeleti.Bilgi($"{rolAdi} hesabı oluşturuldu.");
                 txtAd.Clear();
                 txtSoyad.Clear();
                 txtKullaniciAdi.Clear();
@@ -137,13 +92,9 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 cmbRol.SelectedIndex = 0;
                 PersonelleriYukle();
             }
-            catch (MySqlException ex) when (ex.Number == 1062)
-            {
-                MessageBox.Show("Bu kullanıcı adı zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
             catch (Exception ex)
             {
-                MessageBox.Show("Personel oluşturulurken bir hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FormIskeleti.Hata(ex, "Personel oluşturulurken bir hata oluştu");
             }
         }
 
@@ -151,37 +102,14 @@ namespace Apartman_Yönetim_Paneli_V0._1
         {
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-                using MySqlCommand komut = new MySqlCommand(
-                    @"SELECT KullaniciID, Ad, Soyad, KullaniciAdi, RolAdi
-                      FROM Kullanicilar
-                      WHERE RolAdi IN (@muhasebeci, @teknisyen)
-                      ORDER BY RolAdi, KullaniciID DESC", baglanti);
-                komut.Parameters.AddWithValue("@muhasebeci", Veritabani.RolMuhasebeci);
-                komut.Parameters.AddWithValue("@teknisyen", Veritabani.RolTeknisyen);
-
-                using MySqlDataAdapter adaptor = new MySqlDataAdapter(komut);
-                System.Data.DataTable tablo = new System.Data.DataTable();
-                adaptor.Fill(tablo);
-                dgvPersonel.DataSource = tablo;
-
-                if (dgvPersonel.Columns["KullaniciID"] is DataGridViewColumn idKolon)
-                {
-                    idKolon.HeaderText = "ID";
-                }
-                if (dgvPersonel.Columns["KullaniciAdi"] is DataGridViewColumn kullaniciKolon)
-                {
-                    kullaniciKolon.HeaderText = "Kullanıcı Adı";
-                }
-                if (dgvPersonel.Columns["RolAdi"] is DataGridViewColumn rolKolon)
-                {
-                    rolKolon.HeaderText = "Rol";
-                }
+                dgvPersonel.DataSource = KullaniciServisi.RolleListele(
+                    Veritabani.RolMuhasebeci,
+                    Veritabani.RolTeknisyen);
+                KullaniciServisi.KullaniciGridBasliklari(dgvPersonel);
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Personel listesi yüklenemedi:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FormIskeleti.Hata(ex, "Personel listesi yüklenemedi");
             }
         }
 

@@ -1,5 +1,3 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
@@ -39,66 +37,35 @@ namespace Apartman_Yönetim_Paneli_V0._1
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Admin hesabı hazırlanırken bir hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FormIskeleti.Hata(ex, "Admin hesabı hazırlanırken bir hata oluştu");
             }
         }
 
         private void btnGirisYap_Click(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtKullaniciAdi.Text) || string.IsNullOrWhiteSpace(txtSifre.Text))
-            {
-                MessageBox.Show("Kullanıcı adı ve şifre boş bırakılamaz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            string kullaniciAdi = txtKullaniciAdi.Text.Trim();
-            string sifre = txtSifre.Text;
-
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-                using MySqlCommand komut = new MySqlCommand(
-                    @"SELECT KullaniciID, Ad, Soyad, RolAdi, Durum
-                      FROM Kullanicilar
-                      WHERE KullaniciAdi = @kullaniciAdi AND Sifre = @sifre
-                      LIMIT 1", baglanti);
-                komut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                komut.Parameters.AddWithValue("@sifre", sifre);
-
-                using MySqlDataReader okuyucu = komut.ExecuteReader();
-                if (!okuyucu.Read())
+                IslemSonucu<OturumBilgisi> sonuc = KullaniciServisi.GirisYap(txtKullaniciAdi.Text, txtSifre.Text);
+                if (!sonuc.Basarili || sonuc.Deger is null)
                 {
-                    MessageBox.Show("Kullanıcı adı veya şifre hatalı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    FormIskeleti.Uyari(sonuc.Mesaj);
                     return;
                 }
 
-                int kullaniciId = okuyucu.GetInt32("KullaniciID");
-                string adSoyad = $"{okuyucu.GetString("Ad")} {okuyucu.GetString("Soyad")}";
-                string rolAdi = okuyucu.GetString("RolAdi");
-                string durum = okuyucu.IsDBNull(okuyucu.GetOrdinal("Durum"))
-                    ? Veritabani.DurumAktif
-                    : okuyucu.GetString("Durum");
-
-                if (string.Equals(durum, Veritabani.DurumPasif, StringComparison.OrdinalIgnoreCase))
-                {
-                    MessageBox.Show("Kullanıcı hesabı pasif. Sisteme girişe izin verilmez.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
+                OturumBilgisi oturum = sonuc.Deger;
                 Hide();
                 txtSifre.Clear();
 
-                Form sonrakiForm = string.Equals(rolAdi, Veritabani.RolAdmin, StringComparison.OrdinalIgnoreCase)
-                    ? new FrmAdmin(adSoyad)
-                    : new FrmAnaPanel(kullaniciId, adSoyad, rolAdi);
+                Form sonrakiForm = string.Equals(oturum.RolAdi, Veritabani.RolAdmin, StringComparison.OrdinalIgnoreCase)
+                    ? new FrmAdmin(oturum.AdSoyad)
+                    : new FrmAnaPanel(oturum.KullaniciId, oturum.AdSoyad, oturum.RolAdi);
 
                 sonrakiForm.FormClosed += (_, _) => Show();
                 sonrakiForm.Show();
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Giriş sırasında bir hata oluştu:\n" + ex.Message, "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                FormIskeleti.Hata(ex, "Giriş sırasında bir hata oluştu");
             }
         }
 
