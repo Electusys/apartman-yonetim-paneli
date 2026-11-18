@@ -138,4 +138,4 @@ Bu sürüm eğitim / demo amaçlıdır. Şifreler düz metin tutulur; üretim or
 
 ## Lisans
 
-Bu proje örnek / eğitim amaçlı paylaşılmıştır. İstediğiniz gibi inceleyebilir, geliştirebilir ve kendi projelerinizde temel alabilirsiniz.
+MIT
