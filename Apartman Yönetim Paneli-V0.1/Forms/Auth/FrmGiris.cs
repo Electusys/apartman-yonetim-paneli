@@ -60,8 +60,15 @@ namespace Apartman_Yönetim_Paneli_V0._1
                     ? new FrmAdmin(oturum.AdSoyad)
                     : new FrmAnaPanel(oturum.KullaniciId, oturum.AdSoyad, oturum.RolAdi);
 
-                sonrakiForm.FormClosed += (_, _) => Show();
+                sonrakiForm.FormClosed += (_, _) =>
+                {
+                    Show();
+                    Activate();
+                    BringToFront();
+                };
                 sonrakiForm.Show();
+                sonrakiForm.Activate();
+                sonrakiForm.BringToFront();
             }
             catch (Exception ex)
             {
