@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS AidatBorclari (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------------------------------
--- Tablo 6 — Aidat Ödeme (aktör: Muhasebeci, Yönetici)
+-- Tablo 6 — Aidat Ödeme (aktör: Yönetici)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS Odemeler (
     OdemeID         INT AUTO_INCREMENT PRIMARY KEY,
@@ -122,7 +122,7 @@ CREATE TABLE IF NOT EXISTS Odemeler (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- -----------------------------------------------------------------------------
--- Tablo 7 — Ortak Gider Kaydı (aktör: Yönetici, Muhasebeci)
+-- Tablo 7 — Ortak Gider Kaydı (aktör: Yönetici)
 -- -----------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS Giderler (
     GiderID         INT AUTO_INCREMENT PRIMARY KEY,

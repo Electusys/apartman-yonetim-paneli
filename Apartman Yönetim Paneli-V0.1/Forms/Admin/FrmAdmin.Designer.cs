@@ -124,7 +124,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             lblSolAlt.Name = "lblSolAlt";
             lblSolAlt.Size = new Size(220, 90);
             lblSolAlt.TabIndex = 2;
-            lblSolAlt.Text = "Yönetici rolünü yalnızca Admin atar. Muhasebeci ve teknisyen ataması yönetici panelinden yapılır.";
+            lblSolAlt.Text = "Yönetici rolünü yalnızca Admin atar. Teknisyen ataması ve finansal işlemler yönetici panelinden yapılır.";
             // 
             // lblSolBaslik
             // 

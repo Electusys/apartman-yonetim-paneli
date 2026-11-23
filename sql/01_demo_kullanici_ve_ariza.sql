@@ -34,21 +34,22 @@ DELETE FROM Kullanicilar;
 INSERT IGNORE INTO Roller (RolAdi) VALUES
 ('Admin'),
 ('Apartman Yöneticisi'),
-('Muhasebeci'),
 ('Teknisyen'),
 ('Apartman Sakini');
+
+-- Eski Muhasebeci rolü varsa temizle (uygulamadan kaldırıldı)
+DELETE FROM Kullanicilar WHERE RolAdi = 'Muhasebeci';
+DELETE FROM Roller WHERE RolAdi = 'Muhasebeci';
 
 -- Kullanıcılar: kullanıcı adı = meslek, şifre = 1234
 INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi) VALUES
 ('Sistem', 'Yöneticisi', 'admin', '1234', 'Admin'),
 ('Apartman', 'Yöneticisi', 'yonetici', '1234', 'Apartman Yöneticisi'),
-('Muhasebe', 'Personeli', 'muhasebe', '1234', 'Muhasebeci'),
 ('Teknik', 'Personel', 'teknisyen', '1234', 'Teknisyen'),
 ('Apartman', 'Sakini', 'sakin', '1234', 'Apartman Sakini');
 
 SET @admin     := (SELECT KullaniciID FROM Kullanicilar WHERE KullaniciAdi = 'admin');
 SET @yonetici  := (SELECT KullaniciID FROM Kullanicilar WHERE KullaniciAdi = 'yonetici');
-SET @muhasebe  := (SELECT KullaniciID FROM Kullanicilar WHERE KullaniciAdi = 'muhasebe');
 SET @teknisyen := (SELECT KullaniciID FROM Kullanicilar WHERE KullaniciAdi = 'teknisyen');
 SET @sakin     := (SELECT KullaniciID FROM Kullanicilar WHERE KullaniciAdi = 'sakin');
 
