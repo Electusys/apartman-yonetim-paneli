@@ -17,9 +17,10 @@ Blok–daire, sakin, aidat, ödeme, gider, duyuru ve arıza süreçlerini roller
 | --- | --- |
 | Giriş / Kayıt | Rol bazlı oturum; sakin kaydı herkese açık |
 | Admin paneli | Apartman yöneticisi hesabı oluşturma |
-| Yönetici paneli | Blok, daire, sakin, aidat, ödeme, gider, duyuru, arıza, personel |
+| Yönetici paneli | Blok, daire, sakin, aidat, ödeme, gider, duyuru, arıza, personel, kayıtlı araç, bilet ve güvenlik kayıtları |
 | Muhasebeci | Ödeme ve gider yönetimi |
 | Teknisyen | Arıza / bakım takibi |
+| Güvenlik | Ziyaret, kargo, salt okunur sakin rehberi, plaka ve geçici park, olay raporu, acil durum kaydı, yönetim bileti |
 | Sakin | Duyurular, aidat bilgisi, arıza bildirimi |
 | Dashboard | Analiz kartları + son duyuru / görev listesi |
 
@@ -32,7 +33,7 @@ Arayüz: koyu antrasit arka plan, fıstık yeşili vurgu (`#c5e11d`), sol dikey 
 1. [Releases](https://github.com/Electusys/apartman-yonetim-paneli/releases) sayfasından son sürümün ZIP dosyasını indirin.
 2. ZIP’i bir klasöre çıkarın.
 3. Bilgisayarınızda **MySQL** çalışıyor olsun.
-4. `sql/00_kurulum.sql` dosyasını MySQL’de çalıştırın, ardından `sql/ApartmanYonetimDB_senaryo_tablolari.sql` dosyasını çalıştırın.
+4. MySQL’de sırayla `sql/00_kurulum.sql`, `sql/ApartmanYonetimDB_senaryo_tablolari.sql` ve `sql/02_guvenlik.sql` dosyalarını çalıştırın. Demo verisi için isteğe bağlı `sql/01_demo_kullanici_ve_ariza.sql` vardır.
 5. Aynı klasördeki `Apartman Yönetim Paneli-V0.1.dll.config` (veya `App.config` çıktısı) içinde MySQL şifrenizi güncelleyin:
 
 ```xml
@@ -42,14 +43,14 @@ Arayüz: koyu antrasit arka plan, fıstık yeşili vurgu (`#c5e11d`), sol dikey 
 
 6. `Apartman Yönetim Paneli-V0.1.exe` dosyasını çalıştırın.
 
-### Varsayılan Admin hesabı
+### Varsayılan hesaplar
 
-| Alan | Değer |
-| --- | --- |
-| Kullanıcı adı | `admin` |
-| Şifre | `1234` |
+| Rol | Kullanıcı adı | Şifre |
+| --- | --- | --- |
+| Admin | `admin` | `1234` |
+| Güvenlik | `güvenlik` | `1234` |
 
-Bu değerler `App.config` / yayınlanan `.dll.config` dosyasından değiştirilebilir. Uygulama açılırken Admin hesabı yoksa otomatik oluşturulur.
+Admin şifresi `App.config` / yayınlanan `.dll.config` dosyasından değiştirilebilir. Uygulama açılırken Admin ve güvenlik hesapları yoksa otomatik oluşturulur. Polis ve İtfaiye düğmeleri arama yapmaz; yalnızca kayıt açar.
 
 > **Not:** `win-x64` release paketi **self-contained**dir; ayrı .NET kurulumu gerekmez. MySQL yine gereklidir.
 
@@ -73,6 +74,7 @@ cd apartman-yonetim-paneli
 1. MySQL’de sırayla çalıştırın:
    - `sql/00_kurulum.sql`
    - `sql/ApartmanYonetimDB_senaryo_tablolari.sql`
+   - `sql/02_guvenlik.sql`
 2. `Apartman Yönetim Paneli-V0.1/App.config` içinde `Pwd=` değerini kendi MySQL şifrenizle doldurun.
 3. Derleyip çalıştırın:
 
@@ -92,11 +94,13 @@ Admin
  └── Apartman Yöneticisi
       ├── Muhasebeci
       ├── Teknisyen
+      ├── Güvenlik
       └── Apartman Sakini (kayıt formu ile de açılabilir)
 ```
 
 - **Admin** → yönetici hesabı açar  
-- **Apartman Yöneticisi** → muhasebeci / teknisyen atar, operasyonel modülleri yönetir  
+- **Apartman Yöneticisi** → muhasebeci, teknisyen ve güvenlik atar; operasyonel modülleri yönetir  
+- **Güvenlik** → ziyaret, kargo, plaka ve olay kaydı tutar; aidat ve kimlik bilgisi görmez  
 - **Sakin** → kendi aidat ve arıza ekranlarını kullanır  
 
 ---
@@ -118,10 +122,12 @@ apartman-yonetim-paneli/
 │       ├── Shell/FrmAnaPanel.cs   # Rol paneli (ana kabuk)
 │       ├── Yapi/                  # Blok-daire, sakin
 │       ├── Finans/                # Aidat, ödeme, gider
-│       └── Operasyon/             # Duyuru, arıza
+│       ├── Operasyon/             # Duyuru, arıza
+│       └── Guvenlik/              # Ziyaret, kargo, plaka, olay, bilet
 ├── sql/
 │   ├── 00_kurulum.sql
 │   ├── 01_demo_kullanici_ve_ariza.sql
+│   ├── 02_guvenlik.sql
 │   └── ApartmanYonetimDB_senaryo_tablolari.sql
 └── README.md
 ```
