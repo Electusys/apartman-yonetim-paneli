@@ -63,7 +63,8 @@ namespace Apartman_Yönetim_Paneli_V0._1
             string kullaniciAdi = txtKullaniciAdi.Text.Trim();
             string sifre = txtSifre.Text;
 
-            if (string.Equals(kullaniciAdi, Veritabani.AdminKullaniciAdi, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(kullaniciAdi, Veritabani.AdminKullaniciAdi, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(kullaniciAdi, Veritabani.GuvenlikKullaniciAdi, StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show("Bu kullanıcı adı sistem tarafından ayrılmıştır.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;

@@ -45,14 +45,17 @@ namespace Apartman_Yönetim_Paneli_V0._1
             UiTema.SolSeritKur(
                 pnlSol,
                 "Personel Atama",
-                "Yalnızca muhasebeci veya teknisyen hesabı oluşturabilirsiniz.",
+                "Muhasebeci, teknisyen veya güvenlik hesabı oluşturabilirsiniz.",
                 kullanici,
                 btnGeri);
 
             cmbRol.Items.Clear();
             cmbRol.Items.Add(Veritabani.RolMuhasebeci);
             cmbRol.Items.Add(Veritabani.RolTeknisyen);
+            cmbRol.Items.Add(Veritabani.RolGuvenlik);
             cmbRol.SelectedIndex = 0;
+            lblBaslik.Text = "Personel Oluştur";
+            lblAltBaslik.Text = "Rol olarak muhasebeci, teknisyen veya güvenlik seçilebilir.";
 
             UiTema.Tablo(dgvPersonel);
             PersonelleriYukle();
@@ -82,9 +85,9 @@ namespace Apartman_Yönetim_Paneli_V0._1
             }
 
             string rolAdi = cmbRol.SelectedItem?.ToString() ?? string.Empty;
-            if (rolAdi != Veritabani.RolMuhasebeci && rolAdi != Veritabani.RolTeknisyen)
+            if (rolAdi != Veritabani.RolMuhasebeci && rolAdi != Veritabani.RolTeknisyen && rolAdi != Veritabani.RolGuvenlik)
             {
-                MessageBox.Show("Yönetici yalnızca muhasebeci veya teknisyen atayabilir.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Yönetici yalnızca muhasebeci, teknisyen veya güvenlik atayabilir.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -93,9 +96,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
             string kullaniciAdi = txtKullaniciAdi.Text.Trim();
             string sifre = txtSifre.Text;
 
-            if (string.Equals(kullaniciAdi, Veritabani.AdminKullaniciAdi, StringComparison.OrdinalIgnoreCase))
+            if (string.Equals(kullaniciAdi, Veritabani.AdminKullaniciAdi, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(kullaniciAdi, Veritabani.GuvenlikKullaniciAdi, StringComparison.OrdinalIgnoreCase))
             {
-                MessageBox.Show("Admin kullanıcı adı başkasına verilemez.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Bu kullanıcı adı sistem tarafından ayrılmıştır.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -156,10 +160,11 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 using MySqlCommand komut = new MySqlCommand(
                     @"SELECT KullaniciID, Ad, Soyad, KullaniciAdi, RolAdi
                       FROM Kullanicilar
-                      WHERE RolAdi IN (@muhasebeci, @teknisyen)
+                      WHERE RolAdi IN (@muhasebeci, @teknisyen, @guvenlik)
                       ORDER BY RolAdi, KullaniciID DESC", baglanti);
                 komut.Parameters.AddWithValue("@muhasebeci", Veritabani.RolMuhasebeci);
                 komut.Parameters.AddWithValue("@teknisyen", Veritabani.RolTeknisyen);
+                komut.Parameters.AddWithValue("@guvenlik", Veritabani.RolGuvenlik);
 
                 using MySqlDataAdapter adaptor = new MySqlDataAdapter(komut);
                 System.Data.DataTable tablo = new System.Data.DataTable();

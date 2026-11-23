@@ -86,15 +86,43 @@ namespace Apartman_Yönetim_Paneli_V0._1
                     return;
                 }
 
-                Hide();
+                if (string.Equals(rolAdi, Veritabani.RolGuvenlik, StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        GuvenlikOrtak.Yaz(kullaniciId, "Oturum açıldı", "Güvenlik oturumu açıldı.");
+                    }
+                    catch (Exception logEx)
+                    {
+                        MessageBox.Show(
+                            "Oturum açıldı ancak işlem günlüğüne yazılamadı. Güvenlik tablolarını kurun.\n" + logEx.Message,
+                            "Uyarı",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Warning);
+                    }
+                }
+
                 txtSifre.Clear();
 
                 Form sonrakiForm = string.Equals(rolAdi, Veritabani.RolAdmin, StringComparison.OrdinalIgnoreCase)
                     ? new FrmAdmin(adSoyad)
                     : new FrmAnaPanel(kullaniciId, adSoyad, rolAdi);
 
-                sonrakiForm.FormClosed += (_, _) => Show();
-                sonrakiForm.Show();
+                sonrakiForm.FormClosed += (_, _) =>
+                {
+                    if (IsDisposed)
+                    {
+                        return;
+                    }
+
+                    Show();
+                    Activate();
+                    BringToFront();
+                };
+
+                // Giriş formu, yeni pencere öne alındıktan sonra gizlenir.
+                // Önce gizlenirse Windows uygulamayı görev çubuğundan siler ve pencereyi arkaya atar.
+                UiTema.GosterVeDevret(this, sonrakiForm);
             }
             catch (Exception ex)
             {

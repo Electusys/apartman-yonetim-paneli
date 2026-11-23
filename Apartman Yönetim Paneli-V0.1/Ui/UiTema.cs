@@ -1,5 +1,6 @@
 using System.Drawing.Drawing2D;
 using System.Reflection;
+using System.Runtime.InteropServices;
 
 namespace Apartman_Yönetim_Paneli_V0._1
 {
@@ -292,9 +293,48 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private static readonly Dictionary<Button, ButonAkis> Butonlar = new();
         private static readonly Dictionary<Form, FormAkis> Formlar = new();
+        private static readonly Dictionary<Form, Form> Devir = new();
         private static readonly HashSet<Form> KapanisIzinli = new();
         private static readonly System.Windows.Forms.Timer Kadran = new() { Interval = 16 };
         private static bool _kadranBagli;
+
+        private const int GwlExStyle = -20;
+        private const int WsExAppWindow = 0x00040000;
+        private const int WsExToolWindow = 0x00000080;
+        private const uint SwpNoMove = 0x0002;
+        private const uint SwpNoSize = 0x0001;
+        private const uint SwpShowWindow = 0x0040;
+        private static readonly IntPtr HwndTopMost = new(-1);
+        private static readonly IntPtr HwndNoTopMost = new(-2);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLong", SetLastError = true)]
+        private static extern int GetWindowLong32(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLong", SetLastError = true)]
+        private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll", EntryPoint = "GetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+
+        [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr", SetLastError = true)]
+        private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetForegroundWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int x, int y, int cx, int cy, uint uFlags);
+
+        /// <summary>
+        /// Yeni pencereyi görev çubuğunda ve önde tutarak açar, sonra mevcut pencereyi gizler.
+        /// </summary>
+        public static void GosterVeDevret(Form mevcut, Form sonraki)
+        {
+            sonraki.ShowInTaskbar = true;
+            Devir[sonraki] = mevcut;
+            sonraki.FormClosed += (_, _) => Devir.Remove(sonraki);
+            sonraki.Show();
+        }
 
         private static void CiftTampon(Control kontrol)
         {
@@ -313,9 +353,27 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 return;
             }
 
-            form.Opacity = 0;
+            // Opaklık 0 ile açılan katmanlı pencere, giriş formu gizlenince
+            // görev çubuğundan düşer ve diğer uygulamaların arkasına gider.
+            // Oturum geçişinde pencere normal opaklıkta açılsın.
+            bool devir = Devir.ContainsKey(form);
+            if (!devir)
+            {
+                form.Opacity = 0;
+            }
+
             Formlar[form] = new FormAkis { Hedef = 1 };
-            form.Shown += (_, _) => OpakligaGit(form, 1, null);
+            form.Shown += (_, _) =>
+            {
+                if (Devir.ContainsKey(form))
+                {
+                    OpaklikYaz(form, 1);
+                    BelirdiktenSonra(form);
+                    return;
+                }
+
+                OpakligaGit(form, 1, () => BelirdiktenSonra(form));
+            };
             form.VisibleChanged += (_, _) =>
             {
                 if (form.IsDisposed || form.Disposing)
@@ -333,9 +391,9 @@ namespace Apartman_Yönetim_Paneli_V0._1
                     return;
                 }
 
-                if (form.Opacity < 0.98)
+                if (form.Opacity < 0.98 && !Devir.ContainsKey(form))
                 {
-                    OpakligaGit(form, 1, null);
+                    OpakligaGit(form, 1, () => BelirdiktenSonra(form));
                 }
             };
             form.FormClosing += (_, e) =>
@@ -377,8 +435,107 @@ namespace Apartman_Yönetim_Paneli_V0._1
             }
 
             akis.Hedef = hedef;
-            akis.Bitis = bitis;
+            if (bitis != null)
+            {
+                akis.Bitis = bitis;
+            }
+
             KadraniBaslat();
+        }
+
+        /// <summary>
+        /// Belirme bitince pencereyi görev çubuğuna geri koyar ve öne alır.
+        /// Giriş formu ancak bundan sonra gizlenir.
+        /// </summary>
+        private static void BelirdiktenSonra(Form form)
+        {
+            if (form.IsDisposed || form.Disposing || !form.Visible)
+            {
+                return;
+            }
+
+            bool devir = Devir.TryGetValue(form, out Form? mevcut);
+            if (form.Owner == null)
+            {
+                GorevCubugunaAl(form);
+                OneCikar(form, devir);
+            }
+
+            if (!devir || mevcut == null)
+            {
+                return;
+            }
+
+            Devir.Remove(form);
+            if (!mevcut.IsDisposed && mevcut.Visible && !ReferenceEquals(mevcut, form))
+            {
+                mevcut.Hide();
+            }
+
+            if (!form.IsDisposed && form.Visible)
+            {
+                GorevCubugunaAl(form);
+                OneCikar(form, true);
+            }
+        }
+
+        private static void OneCikar(Form form, bool zorla)
+        {
+            if (form.IsDisposed || form.Disposing || !form.IsHandleCreated || !form.Visible)
+            {
+                return;
+            }
+
+            if (form.WindowState == FormWindowState.Minimized)
+            {
+                form.WindowState = FormWindowState.Normal;
+            }
+
+            try
+            {
+                form.Activate();
+                form.BringToFront();
+                SetForegroundWindow(form.Handle);
+                if (zorla)
+                {
+                    SetWindowPos(form.Handle, HwndTopMost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpShowWindow);
+                    SetWindowPos(form.Handle, HwndNoTopMost, 0, 0, 0, 0, SwpNoMove | SwpNoSize | SwpShowWindow);
+                    form.Activate();
+                }
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+        }
+
+        /// <summary>
+        /// Opaklık pencereyi katmanlı yapınca Windows WS_EX_APPWINDOW bayrağını siler.
+        /// Bayrak geri konmazsa simge görev çubuğunda kalıcı olarak kaybolur.
+        /// </summary>
+        private static void GorevCubugunaAl(Form form)
+        {
+            if (form.IsDisposed || form.Disposing || !form.IsHandleCreated || !form.ShowInTaskbar || form.Owner != null)
+            {
+                return;
+            }
+
+            long stil = Environment.Is64BitProcess
+                ? GetWindowLongPtr64(form.Handle, GwlExStyle).ToInt64()
+                : GetWindowLong32(form.Handle, GwlExStyle);
+            long yeni = (stil | WsExAppWindow) & ~WsExToolWindow;
+            if (yeni == stil)
+            {
+                return;
+            }
+
+            if (Environment.Is64BitProcess)
+            {
+                SetWindowLongPtr64(form.Handle, GwlExStyle, new IntPtr(yeni));
+            }
+            else
+            {
+                SetWindowLong32(form.Handle, GwlExStyle, (int)yeni);
+            }
         }
 
         /// <summary>
@@ -526,6 +683,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
             try
             {
                 form.Opacity = deger;
+                if (form.Visible && deger > 0.05)
+                {
+                    GorevCubugunaAl(form);
+                }
             }
             catch (ObjectDisposedException)
             {

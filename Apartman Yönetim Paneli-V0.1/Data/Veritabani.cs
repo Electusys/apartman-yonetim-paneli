@@ -12,7 +12,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
     {
         // Yerel demo varsayılanı. Gerçek şifreyi App.config içinden değiştirin.
         private const string VarsayilanBaglanti =
-            "Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=;";
+            "Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=8484erygt;";
 
         public static string ConnectionString =>
             ConfigurationManager.ConnectionStrings["ApartmanDb"]?.ConnectionString
@@ -27,13 +27,16 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         // Roller hiyerarşisi:
         // Admin → apartman yöneticisi oluşturur
-        // Apartman Yöneticisi → muhasebeci ve teknisyen atar
+        // Apartman Yöneticisi → muhasebeci, teknisyen ve güvenlik atar
         // Diğerleri kendi panellerine girer
         public const string RolAdmin = "Admin";
         public const string RolYonetici = "Apartman Yöneticisi";
         public const string RolMuhasebeci = "Muhasebeci";
         public const string RolTeknisyen = "Teknisyen";
+        public const string RolGuvenlik = "Güvenlik";
         public const string RolSakin = "Apartman Sakini";
+        public const string GuvenlikKullaniciAdi = "güvenlik";
+        public const string GuvenlikSifre = "1234";
         public const string DurumAktif = "Aktif";
         public const string DurumPasif = "Pasif";
         public const string ArizaBeklemede = "Beklemede";
@@ -167,6 +170,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             RoluEkle(baglanti, RolYonetici);
             RoluEkle(baglanti, RolMuhasebeci);
             RoluEkle(baglanti, RolTeknisyen);
+            RoluEkle(baglanti, RolGuvenlik);
             RoluEkle(baglanti, RolSakin);
 
             // Admin kullanıcı adı daha önce kaydedilmiş mi?
@@ -187,19 +191,60 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 ekle.Parameters.AddWithValue("@sifre", AdminSifre);
                 ekle.Parameters.AddWithValue("@rolAdi", RolAdmin);
                 ekle.ExecuteNonQuery();
+            }
+            else
+            {
+                // Hesap varsa şifre veya rol elle değişmiş olsa bile koddaki değerlere geri çek.
+                using MySqlCommand guncelle = new MySqlCommand(
+                    @"UPDATE Kullanicilar
+                      SET Sifre = @sifre, RolAdi = @rolAdi, Ad = @ad, Soyad = @soyad
+                      WHERE KullaniciAdi = @kullaniciAdi", baglanti);
+                guncelle.Parameters.AddWithValue("@sifre", AdminSifre);
+                guncelle.Parameters.AddWithValue("@rolAdi", RolAdmin);
+                guncelle.Parameters.AddWithValue("@ad", "Sistem");
+                guncelle.Parameters.AddWithValue("@soyad", "Yöneticisi");
+                guncelle.Parameters.AddWithValue("@kullaniciAdi", AdminKullaniciAdi);
+                guncelle.ExecuteNonQuery();
+            }
+
+            GuvenlikHesabiniHazirla(baglanti);
+        }
+
+        /// <summary>
+        /// Demo güvenlik hesabı: kullanıcı adı güvenlik, şifre 1234.
+        /// Hesap yoksa oluşturulur, varsa rol ve şifre bu değerlere çekilir.
+        /// </summary>
+        private static void GuvenlikHesabiniHazirla(MySqlConnection baglanti)
+        {
+            using MySqlCommand kontrol = new MySqlCommand(
+                "SELECT COUNT(*) FROM Kullanicilar WHERE KullaniciAdi = @kullaniciAdi", baglanti);
+            kontrol.Parameters.AddWithValue("@kullaniciAdi", GuvenlikKullaniciAdi);
+            int kayitSayisi = Convert.ToInt32(kontrol.ExecuteScalar());
+
+            if (kayitSayisi == 0)
+            {
+                using MySqlCommand ekle = new MySqlCommand(
+                    @"INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi)
+                      VALUES (@ad, @soyad, @kullaniciAdi, @sifre, @rolAdi)", baglanti);
+                ekle.Parameters.AddWithValue("@ad", "Güvenlik");
+                ekle.Parameters.AddWithValue("@soyad", "Personeli");
+                ekle.Parameters.AddWithValue("@kullaniciAdi", GuvenlikKullaniciAdi);
+                ekle.Parameters.AddWithValue("@sifre", GuvenlikSifre);
+                ekle.Parameters.AddWithValue("@rolAdi", RolGuvenlik);
+                ekle.ExecuteNonQuery();
                 return;
             }
 
-            // Hesap varsa şifre veya rol elle değişmiş olsa bile koddaki değerlere geri çek.
             using MySqlCommand guncelle = new MySqlCommand(
                 @"UPDATE Kullanicilar
-                  SET Sifre = @sifre, RolAdi = @rolAdi, Ad = @ad, Soyad = @soyad
+                  SET Sifre = @sifre, RolAdi = @rolAdi, Ad = @ad, Soyad = @soyad, Durum = @durum
                   WHERE KullaniciAdi = @kullaniciAdi", baglanti);
-            guncelle.Parameters.AddWithValue("@sifre", AdminSifre);
-            guncelle.Parameters.AddWithValue("@rolAdi", RolAdmin);
-            guncelle.Parameters.AddWithValue("@ad", "Sistem");
-            guncelle.Parameters.AddWithValue("@soyad", "Yöneticisi");
-            guncelle.Parameters.AddWithValue("@kullaniciAdi", AdminKullaniciAdi);
+            guncelle.Parameters.AddWithValue("@sifre", GuvenlikSifre);
+            guncelle.Parameters.AddWithValue("@rolAdi", RolGuvenlik);
+            guncelle.Parameters.AddWithValue("@ad", "Güvenlik");
+            guncelle.Parameters.AddWithValue("@soyad", "Personeli");
+            guncelle.Parameters.AddWithValue("@durum", DurumAktif);
+            guncelle.Parameters.AddWithValue("@kullaniciAdi", GuvenlikKullaniciAdi);
             guncelle.ExecuteNonQuery();
         }
 

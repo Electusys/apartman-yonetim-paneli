@@ -80,6 +80,9 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 Nav(nav, "✉", "Duyuru Yönetimi", () => new FrmDuyurular(_kullaniciId, _adSoyad, _rolAdi));
                 Nav(nav, "⚙", "Arıza ve Bakım", () => new FrmAriza(_kullaniciId, _adSoyad, _rolAdi));
                 Nav(nav, "＋", "Personel Ata", () => new FrmPersonelAtama(_adSoyad));
+                Nav(nav, "▣", "Kayıtlı Araçlar", () => new FrmKayitliAraclar(_kullaniciId, _adSoyad));
+                Nav(nav, "✉", "Yönetim Biletleri", () => new FrmBiletListesi(_adSoyad));
+                Nav(nav, "◆", "Güvenlik Kayıtları", () => new FrmGuvenlikGunlugu(_adSoyad));
             }
             else if (Rol(Veritabani.RolMuhasebeci))
             {
@@ -91,6 +94,16 @@ namespace Apartman_Yönetim_Paneli_V0._1
             {
                 Nav(nav, "⚙", "Arıza ve Bakım", () => new FrmAriza(_kullaniciId, _adSoyad, _rolAdi));
                 Nav(nav, "✉", "Duyurular", () => new FrmDuyurular(_kullaniciId, _adSoyad, _rolAdi));
+            }
+            else if (Rol(Veritabani.RolGuvenlik))
+            {
+                Nav(nav, "●", "Ziyaret Girişi", () => new FrmZiyaretKaydi(_kullaniciId, _adSoyad));
+                Nav(nav, "▣", "Kargo Kaydı", () => new FrmKargoKaydi(_kullaniciId, _adSoyad));
+                Nav(nav, "⌂", "Sakin Rehberi", () => new FrmSakinRehberi(_kullaniciId, _adSoyad));
+                Nav(nav, "◆", "Plaka ve Park", () => new FrmPlakaPark(_kullaniciId, _adSoyad));
+                Nav(nav, "✉", "Olay Raporu", () => new FrmOlayRaporu(_kullaniciId, _adSoyad));
+                Nav(nav, "⚙", "Acil Durum", () => new FrmAcilDurum(_kullaniciId, _adSoyad));
+                Nav(nav, "＋", "Yönetim Bileti", () => new FrmYonetimBileti(_kullaniciId, _adSoyad));
             }
             else
             {
@@ -168,29 +181,47 @@ namespace Apartman_Yönetim_Paneli_V0._1
             dash.RowStyles.Add(new RowStyle(SizeType.Absolute, 132F));
             dash.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
+            bool guvenlik = Rol(Veritabani.RolGuvenlik);
             string blok = "—", daire = "—", sakin = "—", ariza = "—";
             DataGridView liste = FormIskeleti.Tablo();
             try
             {
-                blok = Veritabani.Sayi("SELECT COUNT(*) FROM Bloklar").ToString();
-                daire = Veritabani.Sayi("SELECT COUNT(*) FROM Daireler").ToString();
-                sakin = Veritabani.Sayi("SELECT COUNT(*) FROM Sakinler WHERE Aktif = 1").ToString();
-                ariza = Veritabani.Sayi("SELECT COUNT(*) FROM ArizaBildirimleri WHERE Durum <> @d", ("@d", Veritabani.ArizaTamamlandi)).ToString();
-                liste.DataSource = Veritabani.TabloGetir(
-                    @"SELECT Baslik AS Görev, DATE_FORMAT(YayimTarihi, '%d.%m.%Y') AS Tarih
-                      FROM Duyurular
-                      ORDER BY YayimTarihi DESC
-                      LIMIT 8");
+                if (guvenlik)
+                {
+                    blok = Veritabani.Sayi("SELECT COUNT(*) FROM ZiyaretKayitlari WHERE DATE(GirisZamani) = CURDATE()").ToString();
+                    daire = Veritabani.Sayi("SELECT COUNT(*) FROM Kargolar").ToString();
+                    sakin = Veritabani.Sayi("SELECT COUNT(*) FROM GeciciParkIzinleri WHERE BaslangicZamani <= NOW() AND BitisZamani >= NOW()").ToString();
+                    ariza = Veritabani.Sayi("SELECT COUNT(*) FROM YonetimBiletleri").ToString();
+                    liste.DataSource = Veritabani.TabloGetir(
+                        @"SELECT IslemTuru AS İşlem, DATE_FORMAT(IslemTarihi, '%d.%m.%Y %H:%i') AS Zaman, Aciklama
+                          FROM GuvenlikIslemKayitlari
+                          WHERE KullaniciID = @id
+                          ORDER BY IslemID DESC
+                          LIMIT 8",
+                        ("@id", _kullaniciId));
+                }
+                else
+                {
+                    blok = Veritabani.Sayi("SELECT COUNT(*) FROM Bloklar").ToString();
+                    daire = Veritabani.Sayi("SELECT COUNT(*) FROM Daireler").ToString();
+                    sakin = Veritabani.Sayi("SELECT COUNT(*) FROM Sakinler WHERE Aktif = 1").ToString();
+                    ariza = Veritabani.Sayi("SELECT COUNT(*) FROM ArizaBildirimleri WHERE Durum <> @d", ("@d", Veritabani.ArizaTamamlandi)).ToString();
+                    liste.DataSource = Veritabani.TabloGetir(
+                        @"SELECT Baslik AS Görev, DATE_FORMAT(YayimTarihi, '%d.%m.%Y') AS Tarih
+                          FROM Duyurular
+                          ORDER BY YayimTarihi DESC
+                          LIMIT 8");
+                }
             }
             catch
             {
                 liste.DataSource = null;
             }
 
-            dash.Controls.Add(UiTema.AnalizKarti("Blok", blok, "Kayıtlı blok"), 0, 0);
-            dash.Controls.Add(UiTema.AnalizKarti("Daire", daire, "Toplam daire"), 1, 0);
-            dash.Controls.Add(UiTema.AnalizKarti("Sakin", sakin, "Aktif sakin"), 2, 0);
-            dash.Controls.Add(UiTema.AnalizKarti("Açık arıza", ariza, "Bekleyen iş"), 3, 0);
+            dash.Controls.Add(UiTema.AnalizKarti(guvenlik ? "Ziyaret" : "Blok", blok, guvenlik ? "Bugünkü giriş" : "Kayıtlı blok"), 0, 0);
+            dash.Controls.Add(UiTema.AnalizKarti(guvenlik ? "Kargo" : "Daire", daire, guvenlik ? "Teslim alınan" : "Toplam daire"), 1, 0);
+            dash.Controls.Add(UiTema.AnalizKarti(guvenlik ? "Park" : "Sakin", sakin, guvenlik ? "Aktif izin" : "Aktif sakin"), 2, 0);
+            dash.Controls.Add(UiTema.AnalizKarti(guvenlik ? "Bilet" : "Açık arıza", ariza, guvenlik ? "Yönetime iletilen" : "Bekleyen iş"), 3, 0);
 
             Panel gorev = new Panel
             {
@@ -202,7 +233,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             UiTema.Yuvarla(gorev, 16);
             Label gorevBaslik = new Label
             {
-                Text = "SON DUYURULAR / GÖREVLER",
+                Text = guvenlik ? "SON GÜVENLİK İŞLEMLERİ" : "SON DUYURULAR / GÖREVLER",
                 Dock = DockStyle.Top,
                 Height = 28,
                 ForeColor = UiTema.Vurgu,
@@ -225,6 +256,18 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private void btnCikis_Click(object? sender, EventArgs e)
         {
+            if (Rol(Veritabani.RolGuvenlik))
+            {
+                try
+                {
+                    GuvenlikOrtak.Yaz(_kullaniciId, "Oturum kapatıldı", "Güvenlik oturumu kapatıldı.");
+                }
+                catch (Exception ex)
+                {
+                    FormIskeleti.Hata(ex, "Çıkış günlüğe yazılamadı");
+                }
+            }
+
             Close();
         }
     }

@@ -17,6 +17,34 @@ CREATE TABLE IF NOT EXISTS DuyuruYorumlari (
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Güvenlik tabloları varsa önce onlar boşaltılır; yoksa bu adım atlanır.
+DROP PROCEDURE IF EXISTS sp_tabloyu_bosalt;
+DELIMITER $$
+CREATE PROCEDURE sp_tabloyu_bosalt(IN p_tablo VARCHAR(64))
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_schema = DATABASE() AND table_name = p_tablo
+    ) THEN
+        SET @q = CONCAT('DELETE FROM `', p_tablo, '`');
+        PREPARE s FROM @q;
+        EXECUTE s;
+        DEALLOCATE PREPARE s;
+    END IF;
+END$$
+DELIMITER ;
+
+CALL sp_tabloyu_bosalt('DaireBildirimleri');
+CALL sp_tabloyu_bosalt('Kargolar');
+CALL sp_tabloyu_bosalt('GeciciParkIzinleri');
+CALL sp_tabloyu_bosalt('KayitliAraclar');
+CALL sp_tabloyu_bosalt('ZiyaretKayitlari');
+CALL sp_tabloyu_bosalt('OlayKayitlari');
+CALL sp_tabloyu_bosalt('AcilDurumKayitlari');
+CALL sp_tabloyu_bosalt('YonetimBiletleri');
+CALL sp_tabloyu_bosalt('GuvenlikIslemKayitlari');
+DROP PROCEDURE IF EXISTS sp_tabloyu_bosalt;
+
 -- Bağımlı kayıtları temizle
 DELETE FROM ArizaBildirimleri;
 DELETE FROM ArizaTalepleri;
@@ -36,6 +64,7 @@ INSERT IGNORE INTO Roller (RolAdi) VALUES
 ('Apartman Yöneticisi'),
 ('Muhasebeci'),
 ('Teknisyen'),
+('Güvenlik'),
 ('Apartman Sakini');
 
 -- Kullanıcılar: kullanıcı adı = meslek, şifre = 1234
@@ -44,6 +73,7 @@ INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi) VALUES
 ('Apartman', 'Yöneticisi', 'yonetici', '1234', 'Apartman Yöneticisi'),
 ('Muhasebe', 'Personeli', 'muhasebe', '1234', 'Muhasebeci'),
 ('Teknik', 'Personel', 'teknisyen', '1234', 'Teknisyen'),
+('Güvenlik', 'Personeli', 'güvenlik', '1234', 'Güvenlik'),
 ('Apartman', 'Sakini', 'sakin', '1234', 'Apartman Sakini');
 
 SET @admin     := (SELECT KullaniciID FROM Kullanicilar WHERE KullaniciAdi = 'admin');
