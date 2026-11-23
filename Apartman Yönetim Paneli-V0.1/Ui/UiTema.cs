@@ -29,7 +29,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             form.MinimumSize = new Size(980, 620);
             form.FormBorderStyle = FormBorderStyle.Sizable;
             form.MaximizeBox = true;
-            form.Opacity = 1;
+            form.ShowInTaskbar = true;
             CiftTampon(form);
         }
 

@@ -6,9 +6,12 @@ namespace Apartman_Yönetim_Paneli_V0._1
     /// </summary>
     public partial class FrmGiris : Form
     {
+        public OturumBilgisi? Oturum { get; private set; }
+
         public FrmGiris()
         {
             InitializeComponent();
+            ShowInTaskbar = true;
         }
 
         private void FrmGiris_Load(object? sender, EventArgs e)
@@ -52,23 +55,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
                     return;
                 }
 
-                OturumBilgisi oturum = sonuc.Deger;
-                Hide();
+                Oturum = sonuc.Deger;
                 txtSifre.Clear();
-
-                Form sonrakiForm = string.Equals(oturum.RolAdi, Veritabani.RolAdmin, StringComparison.OrdinalIgnoreCase)
-                    ? new FrmAdmin(oturum.AdSoyad)
-                    : new FrmAnaPanel(oturum.KullaniciId, oturum.AdSoyad, oturum.RolAdi);
-
-                sonrakiForm.FormClosed += (_, _) =>
-                {
-                    Show();
-                    Activate();
-                    BringToFront();
-                };
-                sonrakiForm.Show();
-                sonrakiForm.Activate();
-                sonrakiForm.BringToFront();
+                DialogResult = DialogResult.OK;
+                Close();
             }
             catch (Exception ex)
             {
@@ -78,10 +68,9 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private void btnKayitOl_Click(object? sender, EventArgs e)
         {
-            Hide();
             using FrmKayit kayitFormu = new FrmKayit();
-            kayitFormu.ShowDialog();
-            Show();
+            kayitFormu.ShowInTaskbar = true;
+            kayitFormu.ShowDialog(this);
         }
     }
 }
