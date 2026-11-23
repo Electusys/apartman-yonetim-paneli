@@ -2,46 +2,91 @@ namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
     /// Uygulamanın giriş noktası.
-    /// Windows Forms uygulaması burada başlar ve ilk ekran olarak giriş formu açılır.
     /// </summary>
     internal static class Program
     {
-        /// <summary>
-        /// STAThread: WinForms kontrolleri tek iş parçacıklı COM modeline ihtiyaç duyar.
-        /// </summary>
         [STAThread]
         static void Main()
         {
             ApplicationConfiguration.Initialize();
+            Application.Run(new OturumBaglami());
+        }
+    }
 
-            // Giriş formu gizlenip ikinci form Show() edilince Windows görev çubuğu
-            // simgesini düşürüyor ve pencere arkaya gidiyor. Her ekran kendi
-            // ShowDialog oturumunda, görev çubuğunda görünür şekilde açılır.
-            while (true)
-            {
-                OturumBilgisi? oturum;
-                using (FrmGiris giris = new FrmGiris())
-                {
-                    giris.ShowInTaskbar = true;
-                    if (giris.ShowDialog() != DialogResult.OK || giris.Oturum is null)
-                    {
-                        return;
-                    }
+    /// <summary>
+    /// Giriş ve panel aynı anda kapanmasın diye pencereleri sırayla gösterir.
+    /// ShowDialog kullanılmaz: Windows diyalog penceresini görev çubuğundan düşürüp arkaya atıyor.
+    /// </summary>
+    internal sealed class OturumBaglami : ApplicationContext
+    {
+        public static OturumBaglami Aktif { get; private set; } = null!;
 
-                    oturum = giris.Oturum;
-                }
-
-                using Form panel = OturumFormu(oturum);
-                panel.ShowInTaskbar = true;
-                panel.ShowDialog();
-            }
+        public OturumBaglami()
+        {
+            Aktif = this;
+            GirisAc();
         }
 
-        private static Form OturumFormu(OturumBilgisi oturum)
+        public void OturumuAc(FrmGiris giris, OturumBilgisi oturum)
+        {
+            Form panel = PanelOlustur(oturum);
+            panel.ShowInTaskbar = true;
+            panel.StartPosition = FormStartPosition.CenterScreen;
+            panel.FormClosed += (_, _) =>
+            {
+                panel.Dispose();
+                GirisAc();
+            };
+
+            // Panel görünür ve öndeyken giriş kapanır; arada penceresiz an kalmaz.
+            panel.Show();
+            OneGetir(panel);
+            giris.Close();
+        }
+
+        private void GirisAc()
+        {
+            FrmGiris giris = new FrmGiris();
+            giris.FormClosed += (_, _) =>
+            {
+                bool baskaPencereVar = false;
+                foreach (Form acik in Application.OpenForms)
+                {
+                    if (!ReferenceEquals(acik, giris))
+                    {
+                        baskaPencereVar = true;
+                        break;
+                    }
+                }
+
+                giris.Dispose();
+                if (!baskaPencereVar)
+                {
+                    ExitThread();
+                }
+            };
+            giris.Show();
+            OneGetir(giris);
+        }
+
+        private static Form PanelOlustur(OturumBilgisi oturum)
         {
             return string.Equals(oturum.RolAdi, Veritabani.RolAdmin, StringComparison.OrdinalIgnoreCase)
                 ? new FrmAdmin(oturum.AdSoyad)
                 : new FrmAnaPanel(oturum.KullaniciId, oturum.AdSoyad, oturum.RolAdi);
+        }
+
+        private static void OneGetir(Form form)
+        {
+            if (form.WindowState == FormWindowState.Minimized)
+            {
+                form.WindowState = FormWindowState.Normal;
+            }
+
+            form.TopMost = true;
+            form.Activate();
+            form.BringToFront();
+            form.TopMost = false;
         }
     }
 }

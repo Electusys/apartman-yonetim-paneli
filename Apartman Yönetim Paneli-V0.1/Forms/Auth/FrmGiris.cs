@@ -29,6 +29,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             UiTema.BirincilButon(btnGirisYap);
             UiTema.IkincilButon(btnKayitOl);
 
+            Text = "Giriş Yap · v3";
             UiTema.SolSeritKur(
                 pnlSol,
                 "Yönetim Paneli",
@@ -57,8 +58,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
                 Oturum = sonuc.Deger;
                 txtSifre.Clear();
-                DialogResult = DialogResult.OK;
-                Close();
+                OturumBaglami.Aktif.OturumuAc(this, Oturum);
             }
             catch (Exception ex)
             {
