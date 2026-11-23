@@ -1,7 +1,7 @@
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
-    /// Apartman yöneticisinin muhasebeci ve teknisyen hesabı açtığı ekran.
+    /// Apartman yöneticisinin teknisyen hesabı açtığı ekran.
     /// </summary>
     public partial class FrmPersonelAtama : Form
     {
@@ -42,14 +42,14 @@ namespace Apartman_Yönetim_Paneli_V0._1
             UiTema.SolSeritKur(
                 pnlSol,
                 "Personel Atama",
-                "Yalnızca muhasebeci veya teknisyen hesabı oluşturabilirsiniz.",
+                "Yalnızca teknisyen hesabı oluşturabilirsiniz. Aidat, ödeme ve gider işlemleri yönetici panelindedir.",
                 kullanici,
                 btnGeri);
 
             cmbRol.Items.Clear();
-            cmbRol.Items.Add(Veritabani.RolMuhasebeci);
             cmbRol.Items.Add(Veritabani.RolTeknisyen);
             cmbRol.SelectedIndex = 0;
+            cmbRol.Enabled = false;
 
             UiTema.Tablo(dgvPersonel);
             PersonelleriYukle();
@@ -62,8 +62,6 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         private void btnPersonelOlustur_Click(object? sender, EventArgs e)
         {
-            string rolAdi = cmbRol.SelectedItem?.ToString() ?? string.Empty;
-
             try
             {
                 IslemSonucu sonuc = KullaniciServisi.Olustur(
@@ -72,9 +70,8 @@ namespace Apartman_Yönetim_Paneli_V0._1
                     txtKullaniciAdi.Text,
                     txtSifre.Text,
                     txtSifreTekrar.Text,
-                    rolAdi,
-                    "Yönetici yalnızca muhasebeci veya teknisyen atayabilir.",
-                    Veritabani.RolMuhasebeci,
+                    Veritabani.RolTeknisyen,
+                    "Yönetici yalnızca teknisyen atayabilir.",
                     Veritabani.RolTeknisyen);
 
                 if (!sonuc.Basarili)
@@ -83,7 +80,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
                     return;
                 }
 
-                FormIskeleti.Bilgi($"{rolAdi} hesabı oluşturuldu.");
+                FormIskeleti.Bilgi($"{Veritabani.RolTeknisyen} hesabı oluşturuldu.");
                 txtAd.Clear();
                 txtSoyad.Clear();
                 txtKullaniciAdi.Clear();
@@ -102,9 +99,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
         {
             try
             {
-                dgvPersonel.DataSource = KullaniciServisi.RolleListele(
-                    Veritabani.RolMuhasebeci,
-                    Veritabani.RolTeknisyen);
+                dgvPersonel.DataSource = KullaniciServisi.RolleListele(Veritabani.RolTeknisyen);
                 KullaniciServisi.KullaniciGridBasliklari(dgvPersonel);
             }
             catch (Exception ex)

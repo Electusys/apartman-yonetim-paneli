@@ -126,7 +126,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             lblSolAlt.Name = "lblSolAlt";
             lblSolAlt.Size = new Size(220, 110);
             lblSolAlt.TabIndex = 2;
-            lblSolAlt.Text = "Muhasebeci ve teknisyen hesapları yalnızca apartman yöneticisi tarafından açılır.";
+            lblSolAlt.Text = "Teknisyen hesapları yalnızca apartman yöneticisi tarafından açılır.";
             // 
             // lblSolBaslik
             // 
@@ -192,7 +192,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             lblBaslik.Name = "lblBaslik";
             lblBaslik.Size = new Size(752, 37);
             lblBaslik.TabIndex = 0;
-            lblBaslik.Text = "Muhasebeci / Teknisyen Oluştur";
+            lblBaslik.Text = "Teknisyen Oluştur";
             // 
             // lblAltBaslik
             // 
@@ -204,7 +204,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             lblAltBaslik.Name = "lblAltBaslik";
             lblAltBaslik.Size = new Size(752, 19);
             lblAltBaslik.TabIndex = 1;
-            lblAltBaslik.Text = "Rol olarak yalnızca Muhasebeci veya Teknisyen seçilebilir.";
+            lblAltBaslik.Text = "Bu ekrandan yalnızca teknisyen hesabı oluşturulur.";
             // 
             // pnlKart
             // 
@@ -467,7 +467,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             lblListeBaslik.Name = "lblListeBaslik";
             lblListeBaslik.Size = new Size(752, 36);
             lblListeBaslik.TabIndex = 3;
-            lblListeBaslik.Text = "Mevcut muhasebeci ve teknisyenler";
+            lblListeBaslik.Text = "Mevcut teknisyenler";
             lblListeBaslik.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // dgvPersonel

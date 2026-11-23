@@ -1,7 +1,7 @@
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
-    /// Yönetici ve muhasebeci: seçilen aidat borcuna ödeme kaydeder, kalan tutarı günceller.
+    /// Yönetici: seçilen aidat borcuna ödeme kaydeder, kalan tutarı günceller.
     /// </summary>
     public class FrmOdemeYonetimi : Form
     {

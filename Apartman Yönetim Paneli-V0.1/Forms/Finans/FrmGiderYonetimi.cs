@@ -1,7 +1,7 @@
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
-    /// Yönetici ve muhasebeci: ortak gider kaydı.
+    /// Yönetici: ortak gider kaydı.
     /// </summary>
     public class FrmGiderYonetimi : Form
     {

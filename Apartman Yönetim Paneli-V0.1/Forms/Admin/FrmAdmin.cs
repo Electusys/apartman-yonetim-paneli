@@ -53,7 +53,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
             UiTema.SolSeritKur(
                 pnlSol,
                 "Admin Paneli",
-                "Yönetici rolünü yalnızca Admin atar. Muhasebeci ve teknisyen ataması yönetici panelinden yapılır.",
+                "Yönetici rolünü yalnızca Admin atar. Teknisyen ataması ve finansal işlemler yönetici panelinden yapılır.",
                 kullanici,
                 btnCikis);
 

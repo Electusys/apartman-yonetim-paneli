@@ -18,7 +18,6 @@ Blok–daire, sakin, aidat, ödeme, gider, duyuru ve arıza süreçlerini roller
 | Giriş / Kayıt | Rol bazlı oturum; sakin kaydı herkese açık |
 | Admin paneli | Apartman yöneticisi hesabı oluşturma |
 | Yönetici paneli | Blok, daire, sakin, aidat, ödeme, gider, duyuru, arıza, personel |
-| Muhasebeci | Ödeme ve gider yönetimi |
 | Teknisyen | Arıza / bakım takibi |
 | Sakin | Duyurular, aidat bilgisi, arıza bildirimi |
 | Dashboard | Analiz kartları + son duyuru / görev listesi |
@@ -90,13 +89,12 @@ Visual Studio / VS Code ile `.slnx` veya `.csproj` dosyasını da açabilirsiniz
 ```
 Admin
  └── Apartman Yöneticisi
-      ├── Muhasebeci
       ├── Teknisyen
       └── Apartman Sakini (kayıt formu ile de açılabilir)
 ```
 
 - **Admin** → yönetici hesabı açar  
-- **Apartman Yöneticisi** → muhasebeci / teknisyen atar, operasyonel modülleri yönetir  
+- **Apartman Yöneticisi** → aidat / ödeme / gider dahil tüm operasyonu yönetir; teknisyen atar  
 - **Sakin** → kendi aidat ve arıza ekranlarını kullanır  
 
 ---

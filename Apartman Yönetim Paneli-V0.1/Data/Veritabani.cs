@@ -27,11 +27,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         // Roller hiyerarşisi:
         // Admin → apartman yöneticisi oluşturur
-        // Apartman Yöneticisi → muhasebeci ve teknisyen atar
+        // Apartman Yöneticisi → teknisyen atar; aidat/ödeme/gider dahil operasyonu yönetir
         // Diğerleri kendi panellerine girer
         public const string RolAdmin = "Admin";
         public const string RolYonetici = "Apartman Yöneticisi";
-        public const string RolMuhasebeci = "Muhasebeci";
         public const string RolTeknisyen = "Teknisyen";
         public const string RolSakin = "Apartman Sakini";
         public const string DurumAktif = "Aktif";
@@ -188,7 +187,6 @@ namespace Apartman_Yönetim_Paneli_V0._1
             // Önce rol sözlüğünü doldur; kullanıcı kaydı RolAdi metnine bağlıdır.
             RoluEkle(baglanti, RolAdmin);
             RoluEkle(baglanti, RolYonetici);
-            RoluEkle(baglanti, RolMuhasebeci);
             RoluEkle(baglanti, RolTeknisyen);
             RoluEkle(baglanti, RolSakin);
 
