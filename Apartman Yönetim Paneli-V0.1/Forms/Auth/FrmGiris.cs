@@ -58,7 +58,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
                 Oturum = sonuc.Deger;
                 txtSifre.Clear();
-                OturumBaglami.Aktif.OturumuAc(this, Oturum);
+                OturumBaglami.Aktif.OturumuAc(this, sonuc.Deger);
             }
             catch (Exception ex)
             {
