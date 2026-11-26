@@ -1,5 +1,3 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
 
@@ -132,61 +130,10 @@ namespace Apartman_Yönetim_Paneli_V0._1
             string donem = _dtpDonem.Value.ToString("yyyy-MM");
             decimal tutar = _nudTutar.Value;
             DateTime sonOdeme = _dtpSonOdeme.Value.Date;
-            int eklenen = 0;
-            int atlanan = 0;
 
             try
             {
-                using MySqlConnection baglanti = Veritabani.BaglantiAc();
-                using MySqlTransaction tx = baglanti.BeginTransaction();
-
-                long donemId;
-                using (MySqlCommand ara = new MySqlCommand("SELECT AidatDonemID FROM AidatDonemleri WHERE Donem = @donem", baglanti, tx))
-                {
-                    ara.Parameters.AddWithValue("@donem", donem);
-                    object? id = ara.ExecuteScalar();
-                    if (id == null)
-                    {
-                        using MySqlCommand ekle = new MySqlCommand(
-                            @"INSERT INTO AidatDonemleri (Donem, Tutar, SonOdemeTarihi, OlusturanKullaniciID)
-                              VALUES (@donem, @tutar, @son, @kullanici)", baglanti, tx);
-                        ekle.Parameters.AddWithValue("@donem", donem);
-                        ekle.Parameters.AddWithValue("@tutar", tutar);
-                        ekle.Parameters.AddWithValue("@son", sonOdeme);
-                        ekle.Parameters.AddWithValue("@kullanici", _kullaniciId);
-                        ekle.ExecuteNonQuery();
-                        donemId = ekle.LastInsertedId;
-                    }
-                    else
-                    {
-                        donemId = Convert.ToInt64(id);
-                    }
-                }
-
-                foreach (int daireId in daireler)
-                {
-                    using MySqlCommand kontrol = new MySqlCommand(
-                        "SELECT COUNT(*) FROM AidatBorclari WHERE AidatDonemID = @donem AND DaireID = @daire", baglanti, tx);
-                    kontrol.Parameters.AddWithValue("@donem", donemId);
-                    kontrol.Parameters.AddWithValue("@daire", daireId);
-                    if (Convert.ToInt32(kontrol.ExecuteScalar()) > 0)
-                    {
-                        atlanan++;
-                        continue;
-                    }
-
-                    using MySqlCommand borc = new MySqlCommand(
-                        @"INSERT INTO AidatBorclari (AidatDonemID, DaireID, Tutar, KalanTutar, Durum)
-                          VALUES (@donem, @daire, @tutar, @tutar, @durum)", baglanti, tx);
-                    borc.Parameters.AddWithValue("@donem", donemId);
-                    borc.Parameters.AddWithValue("@daire", daireId);
-                    borc.Parameters.AddWithValue("@tutar", tutar);
-                    borc.Parameters.AddWithValue("@durum", Veritabani.BorcOdenmedi);
-                    borc.ExecuteNonQuery();
-                    eklenen++;
-                }
-
-                tx.Commit();
+                (int eklenen, int atlanan) = AidatKaydi.BorcOlustur(donem, tutar, sonOdeme, _kullaniciId, daireler);
                 FormIskeleti.Bilgi($"{eklenen} daire için aidat borcu oluşturuldu." + (atlanan > 0 ? $" {atlanan} dairede bu dönem zaten kayıtlıydı, mükerrer yazılmadı." : ""));
                 Yukle();
             }

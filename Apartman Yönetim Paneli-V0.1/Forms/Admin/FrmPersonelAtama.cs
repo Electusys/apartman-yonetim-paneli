@@ -105,32 +105,13 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-
-                using (MySqlCommand kontrolKomut = new MySqlCommand(
-                    "SELECT COUNT(*) FROM Kullanicilar WHERE KullaniciAdi = @kullaniciAdi", baglanti))
+                if (Hesaplar.KullaniciVar(kullaniciAdi))
                 {
-                    kontrolKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    int kayitSayisi = Convert.ToInt32(kontrolKomut.ExecuteScalar());
-                    if (kayitSayisi > 0)
-                    {
-                        MessageBox.Show("Bu kullanıcı adı zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    MessageBox.Show("Bu kullanıcı adı zaten kayıtlı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
 
-                using (MySqlCommand ekleKomut = new MySqlCommand(
-                    @"INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi)
-                      VALUES (@ad, @soyad, @kullaniciAdi, @sifre, @rolAdi)", baglanti))
-                {
-                    ekleKomut.Parameters.AddWithValue("@ad", ad);
-                    ekleKomut.Parameters.AddWithValue("@soyad", soyad);
-                    ekleKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    ekleKomut.Parameters.AddWithValue("@sifre", sifre);
-                    ekleKomut.Parameters.AddWithValue("@rolAdi", rolAdi);
-                    ekleKomut.ExecuteNonQuery();
-                }
+                Hesaplar.KullaniciEkle(ad, soyad, kullaniciAdi, sifre, rolAdi);
 
                 MessageBox.Show($"{rolAdi} hesabı oluşturuldu.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 txtAd.Clear();
@@ -155,21 +136,7 @@ namespace Apartman_Yönetim_Paneli_V0._1
         {
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-                using MySqlCommand komut = new MySqlCommand(
-                    @"SELECT KullaniciID, Ad, Soyad, KullaniciAdi, RolAdi
-                      FROM Kullanicilar
-                      WHERE RolAdi IN (@muhasebeci, @teknisyen, @guvenlik)
-                      ORDER BY RolAdi, KullaniciID DESC", baglanti);
-                komut.Parameters.AddWithValue("@muhasebeci", Veritabani.RolMuhasebeci);
-                komut.Parameters.AddWithValue("@teknisyen", Veritabani.RolTeknisyen);
-                komut.Parameters.AddWithValue("@guvenlik", Veritabani.RolGuvenlik);
-
-                using MySqlDataAdapter adaptor = new MySqlDataAdapter(komut);
-                System.Data.DataTable tablo = new System.Data.DataTable();
-                adaptor.Fill(tablo);
-                dgvPersonel.DataSource = tablo;
+                dgvPersonel.DataSource = Hesaplar.Personeller();
 
                 if (dgvPersonel.Columns["KullaniciID"] is DataGridViewColumn idKolon)
                 {

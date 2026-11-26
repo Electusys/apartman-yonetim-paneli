@@ -10,13 +10,19 @@ namespace Apartman_Yönetim_Paneli_V0._1
     /// </summary>
     internal static class Veritabani
     {
-        // Yerel demo varsayılanı. Gerçek şifreyi App.config içinden değiştirin.
-        private const string VarsayilanBaglanti =
-            "Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=8484erygt;";
+        public static string ConnectionString
+        {
+            get
+            {
+                string? deger = ConfigurationManager.ConnectionStrings["ApartmanDb"]?.ConnectionString;
+                if (string.IsNullOrWhiteSpace(deger))
+                {
+                    throw new InvalidOperationException("App.config içinde ApartmanDb bağlantısı yok.");
+                }
 
-        public static string ConnectionString =>
-            ConfigurationManager.ConnectionStrings["ApartmanDb"]?.ConnectionString
-            ?? VarsayilanBaglanti;
+                return deger;
+            }
+        }
 
         // Sistem yöneticisi hesabı: kayıt formundan alınamaz, yalnızca bu sınıf oluşturur/günceller.
         public static string AdminKullaniciAdi =>
@@ -157,13 +163,14 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
         /// <summary>
         /// Giriş ekranı açılırken çağrılır.
-        /// Rolleri eksikse ekler, Admin kullanıcısı yoksa oluşturur, varsa şifre/rolünü senkronlar.
-        /// Böylece veritabanı sıfırlansa bile Admin hesabı her açılışta hazır olur.
+        /// Rolleri eksikse ekler. Admin ve güvenlik hesabı yoksa bir kez oluşturur.
+        /// Var olan şifreyi açılışta değiştirmez. Düz metin şifreleri özete çevirir.
         /// </summary>
         public static void AdminHesabiniHazirla()
         {
             using MySqlConnection baglanti = new MySqlConnection(ConnectionString);
             baglanti.Open();
+            DuzSifreleriOzetle(baglanti);
 
             // Önce rol sözlüğünü doldur; kullanıcı kaydı RolAdi metnine bağlıdır.
             RoluEkle(baglanti, RolAdmin);
@@ -188,31 +195,16 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 ekle.Parameters.AddWithValue("@ad", "Sistem");
                 ekle.Parameters.AddWithValue("@soyad", "Yöneticisi");
                 ekle.Parameters.AddWithValue("@kullaniciAdi", AdminKullaniciAdi);
-                ekle.Parameters.AddWithValue("@sifre", AdminSifre);
+                ekle.Parameters.AddWithValue("@sifre", SifreKoruma.Ozetle(AdminSifre));
                 ekle.Parameters.AddWithValue("@rolAdi", RolAdmin);
                 ekle.ExecuteNonQuery();
-            }
-            else
-            {
-                // Hesap varsa şifre veya rol elle değişmiş olsa bile koddaki değerlere geri çek.
-                using MySqlCommand guncelle = new MySqlCommand(
-                    @"UPDATE Kullanicilar
-                      SET Sifre = @sifre, RolAdi = @rolAdi, Ad = @ad, Soyad = @soyad
-                      WHERE KullaniciAdi = @kullaniciAdi", baglanti);
-                guncelle.Parameters.AddWithValue("@sifre", AdminSifre);
-                guncelle.Parameters.AddWithValue("@rolAdi", RolAdmin);
-                guncelle.Parameters.AddWithValue("@ad", "Sistem");
-                guncelle.Parameters.AddWithValue("@soyad", "Yöneticisi");
-                guncelle.Parameters.AddWithValue("@kullaniciAdi", AdminKullaniciAdi);
-                guncelle.ExecuteNonQuery();
             }
 
             GuvenlikHesabiniHazirla(baglanti);
         }
 
         /// <summary>
-        /// Demo güvenlik hesabı: kullanıcı adı güvenlik, şifre 1234.
-        /// Hesap yoksa oluşturulur, varsa rol ve şifre bu değerlere çekilir.
+        /// Demo güvenlik hesabı yoksa bir kez oluşturulur. Var olan şifre korunur.
         /// </summary>
         private static void GuvenlikHesabiniHazirla(MySqlConnection baglanti)
         {
@@ -229,23 +221,50 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 ekle.Parameters.AddWithValue("@ad", "Güvenlik");
                 ekle.Parameters.AddWithValue("@soyad", "Personeli");
                 ekle.Parameters.AddWithValue("@kullaniciAdi", GuvenlikKullaniciAdi);
-                ekle.Parameters.AddWithValue("@sifre", GuvenlikSifre);
+                ekle.Parameters.AddWithValue("@sifre", SifreKoruma.Ozetle(GuvenlikSifre));
                 ekle.Parameters.AddWithValue("@rolAdi", RolGuvenlik);
                 ekle.ExecuteNonQuery();
-                return;
+            }
+        }
+
+        /// <summary>
+        /// Eski düz metin şifreleri bir kez özete çevirir. Özet olan satıra dokunmaz.
+        /// </summary>
+        private static void DuzSifreleriOzetle(MySqlConnection baglanti)
+        {
+            try
+            {
+                using MySqlCommand genislet = new MySqlCommand(
+                    "ALTER TABLE Kullanicilar MODIFY Sifre VARCHAR(255) NOT NULL", baglanti);
+                genislet.ExecuteNonQuery();
+            }
+            catch (MySqlException)
+            {
+                // Sütun zaten uygunsa veya yetki yoksa mevcut kayıtlarla devam edilir.
             }
 
-            using MySqlCommand guncelle = new MySqlCommand(
-                @"UPDATE Kullanicilar
-                  SET Sifre = @sifre, RolAdi = @rolAdi, Ad = @ad, Soyad = @soyad, Durum = @durum
-                  WHERE KullaniciAdi = @kullaniciAdi", baglanti);
-            guncelle.Parameters.AddWithValue("@sifre", GuvenlikSifre);
-            guncelle.Parameters.AddWithValue("@rolAdi", RolGuvenlik);
-            guncelle.Parameters.AddWithValue("@ad", "Güvenlik");
-            guncelle.Parameters.AddWithValue("@soyad", "Personeli");
-            guncelle.Parameters.AddWithValue("@durum", DurumAktif);
-            guncelle.Parameters.AddWithValue("@kullaniciAdi", GuvenlikKullaniciAdi);
-            guncelle.ExecuteNonQuery();
+            using MySqlCommand oku = new MySqlCommand(
+                "SELECT KullaniciID, Sifre FROM Kullanicilar", baglanti);
+            using MySqlDataReader okuyucu = oku.ExecuteReader();
+            List<(int Id, string Duz)> bekleyen = new List<(int, string)>();
+            while (okuyucu.Read())
+            {
+                string kayit = okuyucu.IsDBNull(1) ? "" : okuyucu.GetString(1);
+                if (!SifreKoruma.OzetMi(kayit) && kayit.Length > 0)
+                {
+                    bekleyen.Add((okuyucu.GetInt32(0), kayit));
+                }
+            }
+
+            okuyucu.Close();
+            foreach ((int id, string duz) in bekleyen)
+            {
+                using MySqlCommand yaz = new MySqlCommand(
+                    "UPDATE Kullanicilar SET Sifre = @sifre WHERE KullaniciID = @id", baglanti);
+                yaz.Parameters.AddWithValue("@sifre", SifreKoruma.Ozetle(duz));
+                yaz.Parameters.AddWithValue("@id", id);
+                yaz.ExecuteNonQuery();
+            }
         }
 
         /// <summary>

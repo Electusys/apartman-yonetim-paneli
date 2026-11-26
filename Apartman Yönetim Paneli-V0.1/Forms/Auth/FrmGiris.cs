@@ -1,5 +1,3 @@
-using MySqlConnector;
-
 namespace Apartman_Yönetim_Paneli_V0._1
 {
     /// <summary>
@@ -27,6 +25,20 @@ namespace Apartman_Yönetim_Paneli_V0._1
             UiTema.MetinKutusu(txtSifre);
             UiTema.BirincilButon(btnGirisYap);
             UiTema.IkincilButon(btnKayitOl);
+
+            Button btnKvkk = new Button
+            {
+                Text = "KVKK Aydınlatma Metni",
+                Dock = DockStyle.Top,
+                Height = 40
+            };
+            UiTema.IkincilButon(btnKvkk);
+            btnKvkk.Click += (_, _) =>
+            {
+                using FrmKvkk kvkk = new FrmKvkk();
+                kvkk.ShowDialog(this);
+            };
+            tableForm.Controls.Add(btnKvkk, 0, 9);
 
             UiTema.SolSeritKur(
                 pnlSol,
@@ -56,29 +68,17 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-                using MySqlCommand komut = new MySqlCommand(
-                    @"SELECT KullaniciID, Ad, Soyad, RolAdi, Durum
-                      FROM Kullanicilar
-                      WHERE KullaniciAdi = @kullaniciAdi AND Sifre = @sifre
-                      LIMIT 1", baglanti);
-                komut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                komut.Parameters.AddWithValue("@sifre", sifre);
-
-                using MySqlDataReader okuyucu = komut.ExecuteReader();
-                if (!okuyucu.Read())
+                GirisKaydi? giris = Hesaplar.GirisYap(kullaniciAdi, sifre);
+                if (giris == null)
                 {
                     MessageBox.Show("Kullanıcı adı veya şifre hatalı.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
-                int kullaniciId = okuyucu.GetInt32("KullaniciID");
-                string adSoyad = $"{okuyucu.GetString("Ad")} {okuyucu.GetString("Soyad")}";
-                string rolAdi = okuyucu.GetString("RolAdi");
-                string durum = okuyucu.IsDBNull(okuyucu.GetOrdinal("Durum"))
-                    ? Veritabani.DurumAktif
-                    : okuyucu.GetString("Durum");
+                int kullaniciId = giris.KullaniciId;
+                string adSoyad = giris.AdSoyad;
+                string rolAdi = giris.RolAdi;
+                string durum = giris.Durum;
 
                 if (string.Equals(durum, Veritabani.DurumPasif, StringComparison.OrdinalIgnoreCase))
                 {

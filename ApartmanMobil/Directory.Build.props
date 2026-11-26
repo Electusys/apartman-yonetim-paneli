@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <!-- Android ara dosyaları uzun klasör yolunda derlemeyi kırar. -->
+    <BaseIntermediateOutputPath>$(SystemDrive)\ayp\obj\</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(SystemDrive)\ayp\bin\</BaseOutputPath>
+    <UseShortFileNames>true</UseShortFileNames>
+  </PropertyGroup>
+</Project>

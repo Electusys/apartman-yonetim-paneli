@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS Kullanicilar (
     Soyad         VARCHAR(50)  NOT NULL,
     Telefon       VARCHAR(20)  NULL,
     KullaniciAdi  VARCHAR(50)  NOT NULL,
-    Sifre         VARCHAR(100) NOT NULL,
+    Sifre         VARCHAR(255) NOT NULL,
     RolAdi        VARCHAR(50)  NOT NULL,
     Durum         VARCHAR(20)  NOT NULL DEFAULT 'Aktif',
     KayitTarihi   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,

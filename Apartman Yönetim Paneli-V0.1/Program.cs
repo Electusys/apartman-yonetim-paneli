@@ -10,10 +10,15 @@ namespace Apartman_Yönetim_Paneli_V0._1
         /// STAThread: WinForms kontrolleri tek iş parçacıklı COM modeline ihtiyaç duyar.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
         {
             // Yüksek DPI, varsayılan font ve görsel stilleri ayarlar.
             ApplicationConfiguration.Initialize();
+            if (args.Contains("--hazirla"))
+            {
+                Veritabani.AdminHesabiniHazirla();
+                return;
+            }
 
             // Uygulama kapanana kadar giriş formunu çalıştırır.
             // Oturum açılınca bu form gizlenir; çıkışta tekrar gösterilir.

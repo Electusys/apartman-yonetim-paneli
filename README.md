@@ -30,18 +30,19 @@ Arayüz: koyu antrasit arka plan, fıstık yeşili vurgu (`#c5e11d`), sol dikey 
 
 ## Hızlı başlangıç (Release indirme)
 
-1. [Releases](https://github.com/Electusys/apartman-yonetim-paneli/releases) sayfasından son sürümün ZIP dosyasını indirin.
+1. [Releases](https://github.com/Electusys/apartman-yonetim-paneli/releases) sayfasından son sürümü indirin. Aynı sürümde iki dosya vardır: masaüstü ZIP’i ve Android APK.
 2. ZIP’i bir klasöre çıkarın.
 3. Bilgisayarınızda **MySQL** çalışıyor olsun.
-4. MySQL’de sırayla `sql/00_kurulum.sql`, `sql/ApartmanYonetimDB_senaryo_tablolari.sql` ve `sql/02_guvenlik.sql` dosyalarını çalıştırın. Demo verisi için isteğe bağlı `sql/01_demo_kullanici_ve_ariza.sql` vardır.
-5. Aynı klasördeki `Apartman Yönetim Paneli-V0.1.dll.config` (veya `App.config` çıktısı) içinde MySQL şifrenizi güncelleyin:
+4. MySQL’de sırayla `sql/00_kurulum.sql`, `sql/ApartmanYonetimDB_senaryo_tablolari.sql` ve `sql/02_guvenlik.sql` dosyalarını çalıştırın. Sınırlı veritabanı kullanıcısı için `sql/03_uygulama_kullanicisi.sql` içinde parolayı kendiniz yazıp çalıştırın. Demo verisi için isteğe bağlı `sql/01_demo_kullanici_ve_ariza.sql` vardır.
+5. Aynı klasördeki `Apartman Yönetim Paneli-V0.1.dll.config` içinde `apartman_panel` parolasını yazın:
 
 ```xml
 <add name="ApartmanDb"
-     connectionString="Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=root;Pwd=SIFRENIZ;" />
+     connectionString="Server=127.0.0.1;Port=3306;Database=ApartmanYonetimDB;Uid=apartman_panel;Pwd=SIFRENIZ;" />
 ```
 
 6. `Apartman Yönetim Paneli-V0.1.exe` dosyasını çalıştırın.
+7. Telefonda APK’yı kurun. Telefon ile bilgisayar aynı Wi-Fi ağında olsun. Bağlantı ekranında sunucu adresine bilgisayarın IP’sini, kullanıcıya `apartman_panel`, parolaya aynı veritabanı parolasını yazın. Giriş şifresi bundan ayrıdır.
 
 ### Varsayılan hesaplar
 
@@ -75,7 +76,7 @@ cd apartman-yonetim-paneli
    - `sql/00_kurulum.sql`
    - `sql/ApartmanYonetimDB_senaryo_tablolari.sql`
    - `sql/02_guvenlik.sql`
-2. `Apartman Yönetim Paneli-V0.1/App.config` içinde `Pwd=` değerini kendi MySQL şifrenizle doldurun.
+2. `Apartman Yönetim Paneli-V0.1/App.config` içinde `Pwd=` değerini `apartman_panel` parolanızla doldurun. Kök hesap kullanılmaz.
 3. Derleyip çalıştırın:
 
 ```bash
@@ -124,10 +125,12 @@ apartman-yonetim-paneli/
 │       ├── Finans/                # Aidat, ödeme, gider
 │       ├── Operasyon/             # Duyuru, arıza
 │       └── Guvenlik/              # Ziyaret, kargo, plaka, olay, bilet
+├── ApartmanMobil/                 # Android (MAUI) istemcisi
 ├── sql/
 │   ├── 00_kurulum.sql
 │   ├── 01_demo_kullanici_ve_ariza.sql
 │   ├── 02_guvenlik.sql
+│   ├── 03_uygulama_kullanicisi.sql
 │   └── ApartmanYonetimDB_senaryo_tablolari.sql
 └── README.md
 ```
@@ -138,7 +141,7 @@ Her ekran kendi dosyasındadır (`Frm…cs`). Klasör adı modülü gösterir.
 
 ## Güvenlik notu
 
-Bu sürüm eğitim / demo amaçlıdır. Şifreler düz metin tutulur; üretim ortamı için hash’leme, yetki denetimi ve yapılandırma ayrımı eklenmelidir. Bağlantı bilgilerini kaynak koda gömmeyin; `App.config` üzerinden yönetin.
+Bu sürüm eğitim / demo amaçlıdır. Hesap şifreleri PBKDF2 özeti olarak tutulur. Veritabanı kullanıcısı `apartman_panel` olmalı; parola `App.config` ve telefonun bağlantı ekranında durur, kaynak dosyaya yazılmaz.
 
 ---
 

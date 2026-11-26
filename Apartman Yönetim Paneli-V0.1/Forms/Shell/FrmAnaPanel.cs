@@ -186,32 +186,12 @@ namespace Apartman_Yönetim_Paneli_V0._1
             DataGridView liste = FormIskeleti.Tablo();
             try
             {
-                if (guvenlik)
-                {
-                    blok = Veritabani.Sayi("SELECT COUNT(*) FROM ZiyaretKayitlari WHERE DATE(GirisZamani) = CURDATE()").ToString();
-                    daire = Veritabani.Sayi("SELECT COUNT(*) FROM Kargolar").ToString();
-                    sakin = Veritabani.Sayi("SELECT COUNT(*) FROM GeciciParkIzinleri WHERE BaslangicZamani <= NOW() AND BitisZamani >= NOW()").ToString();
-                    ariza = Veritabani.Sayi("SELECT COUNT(*) FROM YonetimBiletleri").ToString();
-                    liste.DataSource = Veritabani.TabloGetir(
-                        @"SELECT IslemTuru AS İşlem, DATE_FORMAT(IslemTarihi, '%d.%m.%Y %H:%i') AS Zaman, Aciklama
-                          FROM GuvenlikIslemKayitlari
-                          WHERE KullaniciID = @id
-                          ORDER BY IslemID DESC
-                          LIMIT 8",
-                        ("@id", _kullaniciId));
-                }
-                else
-                {
-                    blok = Veritabani.Sayi("SELECT COUNT(*) FROM Bloklar").ToString();
-                    daire = Veritabani.Sayi("SELECT COUNT(*) FROM Daireler").ToString();
-                    sakin = Veritabani.Sayi("SELECT COUNT(*) FROM Sakinler WHERE Aktif = 1").ToString();
-                    ariza = Veritabani.Sayi("SELECT COUNT(*) FROM ArizaBildirimleri WHERE Durum <> @d", ("@d", Veritabani.ArizaTamamlandi)).ToString();
-                    liste.DataSource = Veritabani.TabloGetir(
-                        @"SELECT Baslik AS Görev, DATE_FORMAT(YayimTarihi, '%d.%m.%Y') AS Tarih
-                          FROM Duyurular
-                          ORDER BY YayimTarihi DESC
-                          LIMIT 8");
-                }
+                PanelKartlari ozet = guvenlik ? PanelOzet.Guvenlik(_kullaniciId) : PanelOzet.Genel();
+                blok = ozet.Birinci;
+                daire = ozet.Ikinci;
+                sakin = ozet.Ucuncu;
+                ariza = ozet.Dorduncu;
+                liste.DataSource = ozet.Liste;
             }
             catch
             {

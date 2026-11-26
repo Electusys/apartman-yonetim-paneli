@@ -7,6 +7,8 @@ namespace Apartman_Yönetim_Paneli_V0._1
     /// </summary>
     public partial class FrmKayit : Form
     {
+        private CheckBox? _kvkkOnay;
+
         public FrmKayit()
         {
             InitializeComponent();
@@ -38,6 +40,30 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 pnlSol,
                 "Kayıt Ol",
                 "Bu ekrandan yalnızca apartman sakini hesabı oluşturulur. Yönetici hesapları Admin panelinden açılır.");
+
+            _kvkkOnay = new CheckBox
+            {
+                Text = "KVKK aydınlatma metnini okudum.",
+                AutoSize = true,
+                ForeColor = UiTema.Yazi,
+                Location = new Point(0, 4)
+            };
+            Button btnKvkk = new Button
+            {
+                Text = "Metni oku",
+                Location = new Point(0, 32),
+                Size = new Size(150, 36)
+            };
+            UiTema.IkincilButon(btnKvkk);
+            btnKvkk.Click += (_, _) =>
+            {
+                using FrmKvkk kvkk = new FrmKvkk();
+                kvkk.ShowDialog(this);
+            };
+            Panel kvkkAlani = new Panel { Dock = DockStyle.Fill };
+            kvkkAlani.Controls.Add(btnKvkk);
+            kvkkAlani.Controls.Add(_kvkkOnay);
+            tableForm.Controls.Add(kvkkAlani, 0, 9);
         }
 
         private void btnKayitOl_Click(object? sender, EventArgs e)
@@ -58,6 +84,12 @@ namespace Apartman_Yönetim_Paneli_V0._1
                 return;
             }
 
+            if (_kvkkOnay is not { Checked: true })
+            {
+                MessageBox.Show("Kayıt için KVKK aydınlatma metnini okuyup onay kutusunu işaretleyin.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             string ad = txtAd.Text.Trim();
             string soyad = txtSoyad.Text.Trim();
             string kullaniciAdi = txtKullaniciAdi.Text.Trim();
@@ -72,32 +104,13 @@ namespace Apartman_Yönetim_Paneli_V0._1
 
             try
             {
-                using MySqlConnection baglanti = new MySqlConnection(Veritabani.ConnectionString);
-                baglanti.Open();
-
-                using (MySqlCommand kontrolKomut = new MySqlCommand(
-                    "SELECT COUNT(*) FROM Kullanicilar WHERE KullaniciAdi = @kullaniciAdi", baglanti))
+                if (Hesaplar.KullaniciVar(kullaniciAdi))
                 {
-                    kontrolKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    int kayitSayisi = Convert.ToInt32(kontrolKomut.ExecuteScalar());
-                    if (kayitSayisi > 0)
-                    {
-                        MessageBox.Show("Bu kullanıcı adı zaten kayıtlı. Lütfen başka bir kullanıcı adı seçiniz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
+                    MessageBox.Show("Bu kullanıcı adı zaten kayıtlı. Lütfen başka bir kullanıcı adı seçiniz.", "Uyarı", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
                 }
 
-                using (MySqlCommand ekleKomut = new MySqlCommand(
-                    @"INSERT INTO Kullanicilar (Ad, Soyad, KullaniciAdi, Sifre, RolAdi)
-                      VALUES (@ad, @soyad, @kullaniciAdi, @sifre, @rolAdi)", baglanti))
-                {
-                    ekleKomut.Parameters.AddWithValue("@ad", ad);
-                    ekleKomut.Parameters.AddWithValue("@soyad", soyad);
-                    ekleKomut.Parameters.AddWithValue("@kullaniciAdi", kullaniciAdi);
-                    ekleKomut.Parameters.AddWithValue("@sifre", sifre);
-                    ekleKomut.Parameters.AddWithValue("@rolAdi", Veritabani.RolSakin);
-                    ekleKomut.ExecuteNonQuery();
-                }
+                Hesaplar.KullaniciEkle(ad, soyad, kullaniciAdi, sifre, Veritabani.RolSakin);
 
                 MessageBox.Show("Sakin hesabınız oluşturuldu. Giriş ekranından oturum açabilirsiniz.", "Bilgi", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 Close();
